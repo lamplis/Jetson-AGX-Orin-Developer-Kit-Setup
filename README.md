@@ -137,9 +137,32 @@ sudo docker tag sdkmanager:2.2.0.12028-Ubuntu_22.04 sdkmanager:latest
 ## Run the SDK Manager to Flash
 
 Using Docker :
+
+Since WSL2 mounts the root filesystem (/) by default, you need to explicitly remount it with shared propagation.
+Remount / as shared:
 ```shell
-sudo docker run -it --privileged -v /dev/bus/usb:/dev/bus/usb/ -v /dev:/dev -v /media/$USER:/media/nvidia --name JetPack_AGX_Orin_Devkit --network host sdkmanager --cli --action install --login-type devzone --product Jetson --target-os Linux --version 6.2 --target JETSON_AGX_ORIN_TARGETS --flash --license accept --stay-logged-in true --collect-usage-data enable --exit-on-finish
+sudo mount --make-shared /
 ```
+
+Then run SDKmanager
+
+```shell
+sudo docker run -it --privileged -v /dev/bus/usb:/dev/bus/usb/ -v /dev:/dev -v /media/$USER:/media/nvidia:slave --name JetPack_AGX_Orin_Devkit --network host sdkmanager --cli --action install --login-type devzone --product Jetson --target-os Linux --version 6.2 --target JETSON_AGX_ORIN_TARGETS --flash --license accept --stay-logged-in true --collect-usage-data enable --exit-on-finish
+```
+
+if it fails, just retry. You'll have an error 
+
+```shell
+docker: Error response from daemon: Conflict. The container name "/JetPack_AGX_Orin_Devkit" is already in use by container "a6437d6652e22930ea880bc47af5cbcf5c76efc1066bb27b624423b278376fe5". You have to remove (or rename) that container to be able to reuse that name.
+```
+
+stop it
+
+```shell
+docker stop JetPack_AGX_Orin_Devkit
+sudo docker rm CONTAINER_ID
+```
+then retry
 
 1. Run SDK Manager in CLI mode (or GUI if enabled).
 2. Select the device that is attached to your machine.
