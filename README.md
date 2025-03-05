@@ -9,43 +9,43 @@ Setup guide for Jetson AGX Orin Developer Kit using WSL2 Windows 11
 - Install Linux distributions that comply with the SDK you are about to install
 -- open powershell in admin mode
 -- Ensure you have the latest WSL kernel with the following command:
-``` shell
+```shell
 wsl.exe --update
 ``` 
 -- See a list of available distros with the following command:
-``` shell
+```shell
 wsl --list --online
 ```
 -- Install the required distribution by running the below command
-``` shell
+```shell
 wsl --install -d Ubuntu-22.04
 ```
 
 -- If you need to clean
-``` shell
+```shell
 wsl --list --verbose
 wsl --unregister Ubuntu-24.04
 ```
 
 -- To flash a NVIDIA physical device which is connected over USB to your host Windows machine, you will need to install USBIPD. USBIPD version 4.3.0 or higher is required
-``` shell
+```shell
 winget install --interactive --exact dorssel.usbipd-win
 ```
 
 # 3 Setup the Linux Distribution Environment
 
 - Upgrade Ubuntu
-``` shell
-sudo apt update && sudo apt upgrade -y
+```shell
+sudo apt update && sudo apt full-upgrade -y
 ```
 
 - Run the following command to uninstall all conflicting packages:
-``` shell
+```shell
  for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove $pkg; done
 ```
 
 - Set up Docker's apt repository.
-``` shell
+```shell
 sudo apt-get update
 sudo apt-get install ca-certificates curl
 sudo install -m 0755 -d /etc/apt/keyrings
@@ -59,27 +59,34 @@ sudo apt-get update
 ```
 
 - To install the latest version, run:
-``` shell
+```shell
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
 ```
 
 - Verify that the installation is successful by running the hello-world image:
-``` shell
+```shell
 sudo docker run hello-world
 ```
 
 - It is recommended that you install the wslu package:
-``` shell
+```shell
 sudo apt update && sudo apt install wslu -y
 ```
 - Install additional recommended packages by running the below commands:
-``` shell
+```shell
 sudo apt update && sudo apt install iputils-ping iproute2 netcat iptables dnsutils network-manager usbutils net-tools python3-yaml dosfstools libgetopt-complete-perl openssh-client binutils xxd cpio udev dmidecode -y
 ```
 - To flash a NVIDIA device connected over USB, install the following packages by running the below commands:
-``` shell
+```shell
 sudo apt install linux-tools-virtual hwdata
 ```
+
+- Known Issues : to avoid 'dpkg': Exec format error :
+```shell
+sudo apt update && sudo apt install qemu-user-static binfmt-support
+sudo update-binfmts --enable
+```
+
 - Install SDK Manager, which is available from https://developer.nvidia.com/nvidia-sdk-manager.
 It is recommended that you download the client via a Windows host machine browser and copy it to a WSL folder (usually available at \\wsl$). From a Linux distribution, using a network repo is the recommended method.
 
@@ -106,6 +113,9 @@ Identify the BUS ID of the selected Jetson device (starting with `0955`).
 Attach the BUS ID to the WSL Linux distribution by running the following commands:
 
 ```powershell
+wsl --list --verbose
+wsl --set-default Ubuntu-22.04
+
 usbipd.exe bind --busid <BUSID> --force
 usbipd.exe attach --wsl --busid=<BUSID> --auto-attach
 ```
@@ -122,16 +132,45 @@ Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
 ```
 
 ## Install SDK Manager
-### Build image
-- Download SDK manager on the Linux VM.
-NVIDIA Developer users: the most recent version of NVIDIA SDK Manager can be downloaded from: https://developer.nvidia.com/nvidia-sdk-manager.
-- Download the file to your host machine : \\wsl.localhost\Ubuntu-22.04\home\USERNAME\SDK\sdkmanager-2.2.0.12028-Ubuntu_22.04_docker.tar.gz
+
+### Without Docker
+
+# DOWNLOAD and INSTALL SDKmanager:
+```shell
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+sudo dpkg -i cuda-keyring_1.1-1_all.deb
+sudo apt-get update
+sudo apt-get -y install sdkmanager
+```
+
+# LAUNCH:
+- From a terminal window, launch SDK Manager with the command: 
+```shell
+sdkmanager --cli --action install --login-type devzone --product Jetson --target-os Linux --version 6.2 --target JETSON_AGX_ORIN_TARGETS --flash --license accept --stay-logged-in true --collect-usage-data enable --exit-on-finish
+```
+
+fOR mANUAL fLASHING
+```shell
+export L4T_RELEASE_PACKAGE="Jetson_Linux_R36.4.3_aarch64.tbz2" SAMPLE_FS_PACKAGE="Tegra_Linux_Sample-Root-Filesystem_R36.4.3_aarch64.tbz2" BOARD="jetson-agx-orin-devkit"
+```
+
+List of boards = https://docs.nvidia.com/jetson/archives/r36.4/DeveloperGuide/IN/QuickStart.html#jetson-modules-and-configurations
 
 ```shell
-mkdir ~/SDK
-cd ~/SDK
-sudo docker load -i ./sdkmanager-2.2.0.12028-Ubuntu_22.04_docker.tar.gz
-sudo docker tag sdkmanager:2.2.0.12028-Ubuntu_22.04 sdkmanager:latest
+tar xf ${L4T_RELEASE_PACKAGE}
+sudo tar xpf ${SAMPLE_FS_PACKAGE} -C Linux_for_Tegra/rootfs/
+cd Linux_for_Tegra/
+sudo ./tools/l4t_flash_prerequisites.sh
+sudo ./apply_binaries.sh
+```
+
+```shell
+sudo ./tools/kernel_flash/l4t_initrd_flash.sh --external-device nvme0n1p1 \
+  -c tools/kernel_flash/flash_l4t_t234_nvme.xml \
+  --showlogs --network usb0 jetson-agx-orin-devkit external
+```
+```shell
+sdkmanager --cli --action install --login-type devzone --product Jetson --target-os Linux --version 6.2 --target JETSON_AGX_ORIN_TARGETS --flash --license accept --stay-logged-in true --collect-usage-data enable --exit-on-finish
 ```
 
 ## Run the SDK Manager to Flash
@@ -144,6 +183,17 @@ Remount / as shared:
 sudo mount --make-shared /
 ```
 
+### Build image
+- Download SDK manager on the Linux VM.
+NVIDIA Developer users: the most recent version of NVIDIA SDK Manager can be downloaded from: https://developer.nvidia.com/nvidia-sdk-manager.
+- Download the file to your host machine : \\wsl.localhost\Ubuntu-22.04\home\USERNAME\SDK\sdkmanager-2.2.0.12028-Ubuntu_22.04_docker.tar.gz
+
+```shell
+mkdir ~/SDK
+cd ~/SDK
+sudo docker load -i ./sdkmanager-2.2.0.12028-Ubuntu_22.04_docker.tar.gz
+sudo docker tag sdkmanager:2.2.0.12028-Ubuntu_22.04 sdkmanager:latest
+```
 Then run SDKmanager
 
 ```shell
