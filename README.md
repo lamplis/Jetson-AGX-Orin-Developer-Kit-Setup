@@ -88,7 +88,7 @@ It is recommended that you download the client via a Windows host machine browse
 ## Run your WSL Linux distribution.
 
 1. Connect the Jetson device to a USB port on your Windows machine.
-2. Boot the Jetson device into Recovery mode.
+2. Boot the Jetson device into Recovery mode : press and maintain the mid button, the press and maintain 2s the reset button on the rigth and release both buttons at the same time
 3. Attach the USB BUS ID of the Jetson device to the WSL distribution.
 
 ### Identify the Jetson Device
@@ -115,7 +115,10 @@ usbipd.exe attach --wsl --busid=<BUSID> --auto-attach
 Run the following command in WSL to ensure the Jetson device appears:
 
 ```bash
-lsusb
+~/SDK$ lsusb
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+Bus 001 Device 002: ID 0955:7020 NVIDIA Corp. L4T (Linux for Tegra) running on Tegra
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
 ```
 
 ## Install SDK Manager
