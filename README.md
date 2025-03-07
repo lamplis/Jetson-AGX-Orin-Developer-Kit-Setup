@@ -249,8 +249,12 @@ sudo find /usr/src/ -name 'defconfig' -type f -exec sh -c 'echo "CONFIG_IP_NF_RA
 
 re-build kernel 
 ```shell
-make menuconfig
-make
+sudo apt-get update
+sudo apt-get install build-essential libncurses5-dev libssl-dev bison flex libelf-dev
+cd /usr/src/linux-headers-5.15.148-tegra-ubuntu22.04_aarch64/3rdparty/canonical/linux-jammy/kernel-source
+
+sudo make menuconfig
+sudo make
 sudo make modules_install
 sudo make install
 sudo reboot
