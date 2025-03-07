@@ -235,6 +235,35 @@ Once the flash process is complete, detach the USB by running the following comm
 ```powershell
 usbipd.exe detach --busid=<BUSID>
 ```
+
+# OpenUI
+[open-webui ](https://github.com/open-webui/open-webui)
+docker run -d -p 3000:8080 --gpus all --add-host=host.docker.internal:host-gateway -v open-webui:/app/backend/data --name open-webui --restart always ghcr.io/open-webui/open-webui:cuda
+
+## compose
+```yaml
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:cuda
+    container_name: open-webui
+    restart: always
+    ports:
+      - "3000:8080"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    volumes:
+      - open-webui:/app/backend/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  open-webui:
+```
+sudo docker compose up -d
+
 # Anything LLM
 
 ## Fix Docker IPTABLE
@@ -248,6 +277,12 @@ sudo find /usr/src/ -name 'defconfig' -type f -exec sh -c 'echo "CONFIG_IP_NF_RA
 ```
 
 re-build kernel 
+https://docs.nvidia.com/jetson/archives/r36.4.3/DeveloperGuide/SD/Kernel/KernelCustomization.html
+
+cd /usr/src/
+marche pas
+
+
 ```shell
 sudo apt-get update
 sudo apt-get install build-essential libncurses5-dev libssl-dev bison flex libelf-dev
