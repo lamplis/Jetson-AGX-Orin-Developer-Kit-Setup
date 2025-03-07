@@ -68,6 +68,10 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 sudo docker run hello-world
 ```
 
+```shell
+sudo apt-get update
+sudo apt-get install docker-compose-plugin
+```
 - It is recommended that you install the wslu package:
 ```shell
 sudo apt update && sudo apt install wslu -y
@@ -233,6 +237,42 @@ usbipd.exe detach --busid=<BUSID>
 ```
 # Anything LLM
 
+## Fix Docker IPTABLE
+
+Add the following line to the end of defconfig
+CONFIG_IP_NF_RAW=m
+
+```shell
+# This command searches for the defconfig file in the /usr/src/ directory and appends CONFIG_IP_NF_RAW=m to each file it finds.
+sudo find /usr/src/ -name 'defconfig' -type f -exec sh -c 'echo "CONFIG_IP_NF_RAW=m" | sudo tee -a {}' \;
+```
+
+re-build kernel 
+```shell
+make menuconfig
+make
+sudo make modules_install
+sudo make install
+sudo reboot
+```
+
+and destination for iptable_raw.ko is
+
+/lib/modules/5.15.148-tegra/kernel/net/ipv4/netfilter/
+
+$ docker --version
+Docker version 28.0.1, build 068a01e
+
+$ docker run -dit -p 80:80 --rm --name alpine alpine:latest
+c2210a7f8d3be7e5326b2b3773dc0d92834f7c4db9c779ee0ee9910edf8df462
+
+$ lsmod | grep -i iptable_raw
+iptable_raw            16384  1
+ip_tables              32768  3 iptable_filter,iptable_raw,iptable_nat
+x_tables               45056  12 ip6table_filter,xt_conntrack,iptable_filter,ip6table_nat,xt_tcpudp,xt_addrtype,xt_nat,ip6_tables,iptable_raw,ip_tables,iptable_nat,xt_MASQUERADE
+
+
+## Pull and Run
 https://github.com/Mintplex-Labs/anything-llm/blob/master/docker/HOW_TO_USE_DOCKER.md
 
 Linux: add --add-host=host.docker.internal:host-gateway to docker run command for this to resolve.
