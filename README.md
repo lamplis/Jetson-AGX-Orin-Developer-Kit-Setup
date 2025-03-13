@@ -383,56 +383,178 @@ volumes:
 ```
 
 # Fix Kernel for Docker then Flash Orin AGX
-```
+```shell
 sudo apt install git-core build-essential bc
 ```
 Finding last tag here https://nv-tegra.nvidia.com/r/gitweb?p=3rdparty/canonical/linux-jammy.git;a=summary
 then sync
-```
+```shell
 ~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS/Linux_for_Tegra/source$ ./source_sync.sh -k -t rel-36_eng_2025-02-28
 ```
 
+# Building the Jetson Linux Kernel
+
+```shell
+export TOOLCHAIN_PATH=/home/lamplis/l4t-gcc/aarch64--glibc--stable-2022.08-1
+export NVIDIA_INSTALL_PATH=/home/lamplis/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS
+```
 Jetson Linux Toolchain https://docs.nvidia.com/jetson/archives/r36.2/DeveloperGuide/AT/JetsonLinuxDevelopmentTools.html
 Extracting the Toolchain
 
 To extract the toolchain, enter these commands:
-```
+```shell
 $ mkdir $HOME/l4t-gcc
 $ cd $HOME/l4t-gcc
 $ tar xf <toolchain_archive>
+# tar xf ~/Téléchargements/aarch64--glibc--stable-2022.08-1.tar.bz2
 ```
 Setting the CROSS_COMPILE Environment Variable
-```
+```shell
+//export TOOLCHAIN_PATH=/home/lamplis/l4t-gcc/aarch64--glibc--stable-2022.08-1
 export CROSS_COMPILE=$HOME/l4t-gcc/aarch64--glibc--stable-2022.08-1/bin/aarch64-buildroot-linux-gnu-
 ```
 https://docs.nvidia.com/jetson/archives/r36.2/DeveloperGuide/SD/Kernel/KernelCustomization.html#building-the-jetson-linux-kernel
 Building the Jetson Linux Kernel
 
     Go to the build directory:
-    <install-path> = NVIDIA_KERNELIP= /home/lamplis/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS
-```
-export NVIDIA_KERNELIP=/home/lamplis/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS
-cd $NVIDIA_KERNELIP/Linux_for_Tegra/source
+    <install-path> = NVIDIA_INSTALL_PATH= /home/lamplis/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS
+```shell
+export NVIDIA_INSTALL_PATH=/home/lamplis/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS
+cd $NVIDIA_INSTALL_PATH/Linux_for_Tegra/source
 =>    ~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS/Linux_for_Tegra/source
 ```
 
-```
+```shell
 // <toolchain-path> = /home/lamplis/l4t-gcc/aarch64--glibc--stable-2022.08-1/
 // export CROSS_COMPILE=<toolchain-path>/bin/aarch64-buildroot-linux-gnu-
 sudo apt-get install flex bison libssl-dev
 
-$ make -C kernel
+make -C kernel
 ```
 Run the following commands to install the kernel and in-tree modules:
 
+```shell
+export INSTALL_MOD_PATH=$NVIDIA_INSTALL_PATH/Linux_for_Tegra/rootfs/
+sudo -E make install -C kernel
+cp kernel/kernel-jammy-src/arch/arm64/boot/Image \
+  $NVIDIA_INSTALL_PATH/Linux_for_Tegra/kernel/Image
+```
+# Building the NVIDIA Out-of-Tree Modules
 
 
-$ export INSTALL_MOD_PATH=$NVIDIA_KERNELIP/Linux_for_Tegra/rootfs/
-$ sudo -E make install -C kernel
-$ cp kernel/kernel-jammy-src/arch/arm64/boot/Image \
-  $NVIDIA_KERNELIP/Linux_for_Tegra/kernel/Image
 
+    Go to the build directory:
+```shell
+cd $NVIDIA_INSTALL_PATH/Linux_for_Tegra/source
+```
 
+    Run the following commands to build:
+```shell
+export CROSS_COMPILE=$TOOLCHAIN_PATH/bin/aarch64-buildroot-linux-gnu-
+export KERNEL_HEADERS=$PWD/kernel/kernel-jammy-src
+make modules
+```
+
+    Run the following commands to install:
+
+```shell
+export INSTALL_MOD_PATH=$NVIDIA_INSTALL_PATH/Linux_for_Tegra/rootfs/
+sudo -E make modules_install
+```
+
+# Building the DTBs
+
+    Go to the build directory:
+
+```shell
+cd ~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS/Linux_for_Tegra/source/kernel/kernel-jammy-src
+make ARCH=arm64 defconfig scripts
+
+cd $NVIDIA_INSTALL_PATH/Linux_for_Tegra/source
+```
+
+    Run the following commands to build:
+```shell
+export CROSS_COMPILE=$TOOLCHAIN_PATH/bin/aarch64-buildroot-linux-gnu-
+export KERNEL_HEADERS=$PWD/kernel/kernel-jammy-src
+make dtbs
+```
+    Run the following commands to install:
+
+```shell
+cp nvidia-oot/device-tree/platform/generic-dts/dtbs/* \
+         $NVIDIA_INSTALL_PATH/Linux_for_Tegra/kernel/dtb/
+```
 
 
 /bin/bash -c /home/lamplis/.nvsdkm/replays/scripts/JetPack_6.2_Linux/NV_L4T_FLASH_JETSON_LINUX_COMP.sh
+
+# how to flash a custom or specific tag (e.g., rel-36_eng_2025-02-28)
+
+To flash a custom or specific tag (e.g., `rel-36_eng_2025-02-28`) onto your NVIDIA Jetson device, you can use the `flash.sh` script provided in the Jetson Linux package. Here's a step-by-step guide:
+
+---
+
+### 1. **Prepare Your Environment**
+   - Ensure you have the required tools installed on your host machine:
+     ```bash
+     sudo apt-get install build-essential libncurses5-dev libssl-dev
+     ```
+   - Download and install the NVIDIA SDK Manager if you haven't already. It simplifies the setup process.
+
+---
+
+### 2. **Sync the Specific Tag**
+   - Navigate to the `Linux_for_Tegra/source` directory:
+     ```bash
+     cd ~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS/Linux_for_Tegra/source
+     ```
+   - Sync the source code to the desired tag:
+     ```bash
+     ./source_sync.sh -k -t rel-36_eng_2025-02-28
+     ```
+
+---
+
+### 3. **Build the Kernel and Device Tree**
+   - Navigate to the kernel source directory:
+     ```bash
+     cd kernel/kernel-jammy-src
+     ```
+   - Set up the default configuration:
+     ```bash
+     make ARCH=arm64 tegra_defconfig
+     ```
+   - Build the kernel, DTBs, and modules:
+     ```bash
+     make ARCH=arm64 -j$(nproc)
+     make ARCH=arm64 dtbs
+     make ARCH=arm64 modules
+     ```
+
+---
+
+### 4. **Replace Kernel and DTBs**
+   - Copy the kernel image and DTBs to the `Linux_for_Tegra` directory:
+     ```bash
+     cp arch/arm64/boot/Image ~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS/Linux_for_Tegra/kernel/
+     cp arch/arm64/boot/dts/nvidia/*.dtb ~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS/Linux_for_Tegra/kernel/dtb/
+     ```
+
+---
+
+### 5. **Flash the Device**
+   - Put your Jetson device into recovery mode:
+     - Hold the **RECOVERY** button while powering on the device.
+   - Flash the device using the `flash.sh` script:
+     ```bash
+     cd ~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS/Linux_for_Tegra
+     sudo ./flash.sh jetson-agx-orin-devkit mmcblk0p1
+     ```
+
+---
+
+### 6. **Verify the Flash**
+   - Once the flashing process is complete, reboot the device and verify that the custom tag has been applied.
+
+---
