@@ -375,3 +375,45 @@ volumes:
       o: bind
       device: /path/on/local/disk
 ```
+
+# Fix Kernel for Docker then Flash Orin AGX
+```
+sudo apt install git-core build-essential bc
+```
+Finding last tag here https://nv-tegra.nvidia.com/r/gitweb?p=3rdparty/canonical/linux-jammy.git;a=summary
+then sync
+```
+~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS/Linux_for_Tegra/source$ ./source_sync.sh -k -t rel-36_eng_2025-02-28
+```
+
+Jetson Linux Toolchain https://docs.nvidia.com/jetson/archives/r36.2/DeveloperGuide/AT/JetsonLinuxDevelopmentTools.html
+Extracting the Toolchain
+
+To extract the toolchain, enter these commands:
+```
+$ mkdir $HOME/l4t-gcc
+$ cd $HOME/l4t-gcc
+$ tar xf <toolchain_archive>
+```
+Setting the CROSS_COMPILE Environment Variable
+```
+export CROSS_COMPILE=$HOME/l4t-gcc/aarch64--glibc--stable-2022.08-1/bin/aarch64-buildroot-linux-gnu-
+```
+https://docs.nvidia.com/jetson/archives/r36.2/DeveloperGuide/SD/Kernel/KernelCustomization.html#building-the-jetson-linux-kernel
+Building the Jetson Linux Kernel
+
+    Go to the build directory:
+```
+    $ cd <install-path>/Linux_for_Tegra/source
+    ~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS/Linux_for_Tegra/source
+```
+    If you are building the real-time kernel, enable the real-time configuration:
+```
+    $ ./generic_rt_build.sh "enable"
+```
+```
+// export CROSS_COMPILE=<toolchain-path>/bin/aarch64-buildroot-linux-gnu-
+sudo apt-get install flex bison libssl-dev
+
+$ make -C kernel
+```
