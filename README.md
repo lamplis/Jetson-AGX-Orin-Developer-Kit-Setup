@@ -178,6 +178,12 @@ sudo ./tools/kernel_flash/l4t_initrd_flash.sh --external-device nvme0n1p1 \
 sdkmanager --cli --action install --login-type devzone --product Jetson --target-os Linux --version 6.2 --target JETSON_AGX_ORIN_TARGETS --flash --license accept --stay-logged-in true --collect-usage-data enable --exit-on-finish
 ```
 
+# ERROR: might be timeout in USB write.
+On some systems, USB autosuspend can interfere with the flashing process. Disable it by running:
+bash
+echo -1 | sudo tee /sys/module/usbcore/parameters/autosuspend
+
+
 ## Run the SDK Manager to Flash
 
 Using Docker :
@@ -403,17 +409,30 @@ https://docs.nvidia.com/jetson/archives/r36.2/DeveloperGuide/SD/Kernel/KernelCus
 Building the Jetson Linux Kernel
 
     Go to the build directory:
+    <install-path> = NVIDIA_KERNELIP= /home/lamplis/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS
 ```
-    $ cd <install-path>/Linux_for_Tegra/source
-    ~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS/Linux_for_Tegra/source
+export NVIDIA_KERNELIP=/home/lamplis/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS
+cd $NVIDIA_KERNELIP/Linux_for_Tegra/source
+=>    ~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS/Linux_for_Tegra/source
 ```
-    If you are building the real-time kernel, enable the real-time configuration:
+
 ```
-    $ ./generic_rt_build.sh "enable"
-```
-```
+// <toolchain-path> = /home/lamplis/l4t-gcc/aarch64--glibc--stable-2022.08-1/
 // export CROSS_COMPILE=<toolchain-path>/bin/aarch64-buildroot-linux-gnu-
 sudo apt-get install flex bison libssl-dev
 
 $ make -C kernel
 ```
+Run the following commands to install the kernel and in-tree modules:
+
+
+
+$ export INSTALL_MOD_PATH=$NVIDIA_KERNELIP/Linux_for_Tegra/rootfs/
+$ sudo -E make install -C kernel
+$ cp kernel/kernel-jammy-src/arch/arm64/boot/Image \
+  $NVIDIA_KERNELIP/Linux_for_Tegra/kernel/Image
+
+
+
+
+/bin/bash -c /home/lamplis/.nvsdkm/replays/scripts/JetPack_6.2_Linux/NV_L4T_FLASH_JETSON_LINUX_COMP.sh
