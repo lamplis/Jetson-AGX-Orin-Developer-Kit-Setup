@@ -550,6 +550,13 @@ To flash a custom or specific tag (e.g., `rel-36_eng_2025-02-28`) onto your NVID
      ```bash
      cd ~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS/Linux_for_Tegra
      sudo ./flash.sh jetson-agx-orin-devkit mmcblk0p1
+
+     sudo ./flash.sh jetson-agx-orin-devkit nvme0n1p1
+```
+NVIDIA provides an alternative script, l4t_initrd_flash.sh, which simplifies flashing to external storage like NVMe:
+```bash
+sudo ./tools/l4t_initrd_flash.sh --external-device nvme0n1p1 -c ./tools/kernel_flash/flash_l4t_external.xml jetson-agx-orin-devkit nvme0n1p1
+
      ```
 
 ---
