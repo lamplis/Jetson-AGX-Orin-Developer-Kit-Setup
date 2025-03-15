@@ -541,13 +541,11 @@ To flash a custom or specific tag (e.g., `rel-36_eng_2025-02-28`) onto your NVID
      cp arch/arm64/boot/dts/nvidia/*.dtb ~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS/Linux_for_Tegra/kernel/dtb/
      ```
 
----
-
 ### 5. **Flash the Device**
    - Put your Jetson device into recovery mode:
      - Hold the **RECOVERY** button while powering on the device.
    - Flash the device using the `flash.sh` script:
-     ```bash
+```bash
      cd ~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS/Linux_for_Tegra
      sudo ./flash.sh jetson-agx-orin-devkit mmcblk0p1
 
@@ -556,10 +554,7 @@ To flash a custom or specific tag (e.g., `rel-36_eng_2025-02-28`) onto your NVID
 NVIDIA provides an alternative script, l4t_initrd_flash.sh, which simplifies flashing to external storage like NVMe:
 ```bash
 sudo ./tools/l4t_initrd_flash.sh --external-device nvme0n1p1 -c ./tools/kernel_flash/flash_l4t_external.xml jetson-agx-orin-devkit nvme0n1p1
-
-     ```
-
----
+```
 
 ### 6. **Verify the Flash**
    - Once the flashing process is complete, reboot the device and verify that the custom tag has been applied.
@@ -567,75 +562,140 @@ sudo ./tools/l4t_initrd_flash.sh --external-device nvme0n1p1 -c ./tools/kernel_f
 ---
 # Docker ISSUE
 
-If you're encountering issues with Docker on your NVIDIA Jetson device after updating to Docker version 28.0.0, it's likely due to compatibility problems between this Docker release and the current JetPack kernel configuration. To resolve this, you can downgrade Docker to version 27.5.1, which is known to work seamlessly with JetPack 6.2.
+## ✅ **1. Vérifier la version actuelle de Jetson Linux**
+Avant de commencer, assurez-vous de connaître votre version de **L4T (Linux for Tegra)** :
 
-**Steps to Downgrade Docker:**
+```bash
+dpkg-query --show nvidia-l4t-core
+```
+Exemple de sortie :
+```
+nvidia-l4t-core  36.4.3-20250107174145
+```
+Si votre version est compatible avec le tag que vous voulez (`rel-36_eng_2025-02-28`), vous pouvez continuer.
 
-1. **Uninstall the Current Docker Version:**
+---
 
+## 📥 **2. Récupérer les sources du noyau via Git**
+NVIDIA héberge les sources du noyau sur son serveur Git. Voici comment récupérer **le tag spécifique** :
+
+1. **Installez Git et les outils nécessaires** :
    ```bash
-   sudo apt-get remove docker-ce docker-ce-cli docker-compose-plugin docker-buildx-plugin docker-ce-rootless-extras
+   sudo apt update
+   sudo apt install git build-essential bc bison flex libssl-dev libelf-dev libncurses5-dev
    ```
-
 
-2. **Install Docker Version 27.5.1:**
-
+2. **Créez un dossier de travail et accédez-y** :
    ```bash
-   sudo apt-get install docker-ce=5:27.5.1-1~ubuntu.22.04~jammy \
-                        docker-ce-cli=5:27.5.1-1~ubuntu.22.04~jammy \
-                        docker-compose-plugin=2.32.4-1~ubuntu.22.04~jammy \
-                        docker-buildx-plugin=0.20.0-1~ubuntu.22.04~jammy \
-                        docker-ce-rootless-extras=5:27.5.1-1~ubuntu.22.04~jammy
+   mkdir -p ~/jetson-kernel && cd ~/jetson-kernel
    ```
-
 
-3. **Prevent Future Automatic Upgrades:**
+3. **Clonez le dépôt du noyau NVIDIA :**
+liste des tags ici : https://nv-tegra.nvidia.com/r/gitweb?p=3rdparty/canonical/linux-jammy.git;a=summary
+```
+git clone --depth 1 --branch rel-36_eng_2025-02-28 https://nv-tegra.nvidia.com/r/3rdparty/canonical/linux-jammy.git
+```
 
+4. **Accédez au dossier cloné :**
    ```bash
-   sudo apt-mark hold docker-ce docker-ce-cli docker-compose-plugin docker-buildx-plugin docker-ce-rootless-extras
+   cd linux-jammy
    ```
-
+   
+🚀 **Vous êtes maintenant sur la version exacte du noyau NVIDIA correspondant à ce tag !**
 
-   This command ensures that these Docker packages remain at version 27.5.1 until a compatible update is available.
+---
 
-**Alternative Solution:**
-
-If you prefer not to downgrade Docker, another approach involves resetting the `iptables` rules and configuring Docker to use the legacy `iptables` backend:
-
-1. **Stop the Docker Daemon:**
-
+## ⚙️ **3. Configurer le noyau**
+1. **Copiez la configuration actuelle pour ne pas repartir de zéro :**
    ```bash
-   sudo systemctl stop docker
+   cp /proc/config.gz .
+   gunzip config.gz
+   mv config .config
    ```
-
 
-2. **Reset `iptables` Rules:**
-
+2. **Lancer la configuration du noyau (si besoin de modifier des options) :**
    ```bash
-   sudo iptables -F
-   sudo iptables -X
+   make ARCH=arm64 menuconfig
    ```
-
 
-3. **Set `iptables` to Use the Legacy Backend:**
+   - **Activer les options réseau** : `Networking Support` → `Networking Options` → Activer `iptables`, `x_tables`, `ip_tables`
+   - **Vérifier les modules Tegra et stockage** si besoin.
 
+3. **Sauvegardez et quittez** (`Exit` → `Save`).
+
+---
+
+## 🔨 **4. Compiler le noyau**
+1. **Définir les variables d'environnement :**
    ```bash
-   sudo update-alternatives --set iptables /usr/sbin/iptables-legacy
-   sudo update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+   export ARCH=arm64
+   export CROSS_COMPILE=aarch64-linux-gnu-
    ```
-
 
-4. **Restart Docker:**
-
+2. **Compiler le noyau :**
    ```bash
-   sudo systemctl start docker
+   make -j$(nproc)
    ```
-
 
-This method addresses compatibility issues arising from Docker's reliance on certain kernel configurations not enabled by default in the current JetPack release.
+3. **Compiler les modules uniquement si nécessaire :**
+   ```bash
+   make modules -j$(nproc)
+   ```
 
-**Additional Resources:**
+---
 
-For a step-by-step visual guide on setting up Docker on JetPack 6 and addressing related issues, you might find the following video helpful:
+## 📂 **5. Installer le noyau et les modules**
+1. **Installer les nouveaux modules :**
+   ```bash
+   sudo make modules_install
+   ```
 
-videoDocker Setup On Jetson Orin - Includes JetPack 6 Docker fixturn0search2 
+2. **Installer le noyau :**
+   ```bash
+   sudo cp arch/arm64/boot/Image /boot/Image
+   sudo cp arch/arm64/boot/dts/nvidia/*.dtb /boot/
+   ```
+
+---
+
+## 🔄 **6. Mettre à jour le bootloader**
+1. **Retourner dans le dossier du bootloader :**
+   ```bash
+   cd ~/jetson-kernel/Linux_for_Tegra
+   ```
+
+2. **Mettre à jour le Jetson avec le nouveau noyau :**
+   ```bash
+   sudo ./flash.sh jetson-agx-orin-devkit mmcblk0p1
+   ```
+
+⚠️ **ATTENTION** : Cette commande peut modifier certaines partitions système, alors **assurez-vous d’avoir une sauvegarde avant**.
+
+---
+
+## 🚀 **7. Redémarrer et vérifier**
+1. **Redémarrer le Jetson :**
+   ```bash
+   sudo reboot
+   ```
+
+2. **Vérifier que le noyau est bien à jour :**
+   ```bash
+   uname -r
+   ```
+
+   Il devrait afficher la version du noyau compilé.
+
+---
+
+## 🎯 **Résumé des étapes**
+✔ **Télécharger les sources NVIDIA depuis Git**  
+✔ **Basculer sur le tag `rel-36_eng_2025-02-28`**  
+✔ **Configurer, compiler et installer le noyau**  
+✔ **Mettre à jour le bootloader et redémarrer**  
+
+---
+
+### 🎉 **Votre Jetson AGX Orin utilise maintenant le noyau `rel-36_eng_2025-02-28` !** 🚀  
+Si vous avez des erreurs ou des questions, partagez-les ici ! 🔥
+
