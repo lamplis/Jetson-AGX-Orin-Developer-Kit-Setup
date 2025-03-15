@@ -666,10 +666,14 @@ Vous êtes dans une phase où le système vous demande de confirmer certains cor
    ```
 
 2. **Mettre à jour le Jetson avec le nouveau noyau :**
+   Par défaut, mmcblk0p1 signifie que le système va être installé dans l’eMMC interne du Jetson.
    ```bash
    sudo ./flash.sh jetson-agx-orin-devkit mmcblk0p1
    ```
-
+   Si vous voulez installer Jetson Linux sur un SSD NVMe au lieu de l’eMMC, remplacez mmcblk0p1 par nvme0n1p1 :
+   ``bash
+   sudo ./flash.sh jetson-agx-orin-devkit nvme0n1p1
+   ```
 ⚠️ **ATTENTION** : Cette commande peut modifier certaines partitions système, alors **assurez-vous d’avoir une sauvegarde avant**.
 
 ---
