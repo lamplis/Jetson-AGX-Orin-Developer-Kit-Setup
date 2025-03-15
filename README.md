@@ -657,6 +657,10 @@ Vous êtes dans une phase où le système vous demande de confirmer certains cor
    sudo cp arch/arm64/boot/dts/nvidia/*.dtb /boot/
    ```
 
+Ensuite, redémarrez le Jetson :
+```bash
+sudo reboot
+```
 ---
 
 ## 🔄 **6. Mettre à jour le bootloader**
