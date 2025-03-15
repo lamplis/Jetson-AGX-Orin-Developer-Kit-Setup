@@ -565,3 +565,77 @@ sudo ./tools/l4t_initrd_flash.sh --external-device nvme0n1p1 -c ./tools/kernel_f
    - Once the flashing process is complete, reboot the device and verify that the custom tag has been applied.
 
 ---
+# Docker ISSUE
+
+If you're encountering issues with Docker on your NVIDIA Jetson device after updating to Docker version 28.0.0, it's likely due to compatibility problems between this Docker release and the current JetPack kernel configuration. To resolve this, you can downgrade Docker to version 27.5.1, which is known to work seamlessly with JetPack 6.2.
+
+**Steps to Downgrade Docker:**
+
+1. **Uninstall the Current Docker Version:**
+
+   ```bash
+   sudo apt-get remove docker-ce docker-ce-cli docker-compose-plugin docker-buildx-plugin docker-ce-rootless-extras
+   ```
+
+
+2. **Install Docker Version 27.5.1:**
+
+   ```bash
+   sudo apt-get install docker-ce=5:27.5.1-1~ubuntu.22.04~jammy \
+                        docker-ce-cli=5:27.5.1-1~ubuntu.22.04~jammy \
+                        docker-compose-plugin=2.32.4-1~ubuntu.22.04~jammy \
+                        docker-buildx-plugin=0.20.0-1~ubuntu.22.04~jammy \
+                        docker-ce-rootless-extras=5:27.5.1-1~ubuntu.22.04~jammy
+   ```
+
+
+3. **Prevent Future Automatic Upgrades:**
+
+   ```bash
+   sudo apt-mark hold docker-ce docker-ce-cli docker-compose-plugin docker-buildx-plugin docker-ce-rootless-extras
+   ```
+
+
+   This command ensures that these Docker packages remain at version 27.5.1 until a compatible update is available.
+
+**Alternative Solution:**
+
+If you prefer not to downgrade Docker, another approach involves resetting the `iptables` rules and configuring Docker to use the legacy `iptables` backend:
+
+1. **Stop the Docker Daemon:**
+
+   ```bash
+   sudo systemctl stop docker
+   ```
+
+
+2. **Reset `iptables` Rules:**
+
+   ```bash
+   sudo iptables -F
+   sudo iptables -X
+   ```
+
+
+3. **Set `iptables` to Use the Legacy Backend:**
+
+   ```bash
+   sudo update-alternatives --set iptables /usr/sbin/iptables-legacy
+   sudo update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+   ```
+
+
+4. **Restart Docker:**
+
+   ```bash
+   sudo systemctl start docker
+   ```
+
+
+This method addresses compatibility issues arising from Docker's reliance on certain kernel configurations not enabled by default in the current JetPack release.
+
+**Additional Resources:**
+
+For a step-by-step visual guide on setting up Docker on JetPack 6 and addressing related issues, you might find the following video helpful:
+
+videoDocker Setup On Jetson Orin - Includes JetPack 6 Docker fixturn0search2 
