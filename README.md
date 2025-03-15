@@ -633,8 +633,9 @@ git clone --depth 1 --branch rel-36_eng_2025-02-28 https://nv-tegra.nvidia.com/r
    ```
 
 2. **Compiler le noyau :**
+Vous êtes dans une phase où le système vous demande de confirmer certains correctifs matériels pour le noyau, connus sous le nom de ARM errata workarounds. Ces correctifs sont appliqués pour éviter des bugs matériels liés aux processeurs Cortex-A et Neoverse. Si vous utilisez un Jetson AGX Orin, qui contient des cœurs Cortex-A78AE + Cortex-A65AE, il est préférable de répondre Y (Yes) à toutes les questions pour activer les correctifs nécessaires.
    ```bash
-   make -j$(nproc)
+   yes "" | make -j$(nproc)
    ```
 
 3. **Compiler les modules uniquement si nécessaire :**
