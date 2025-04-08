@@ -249,6 +249,8 @@ docker run -d -p 3000:8080 --gpus all --add-host=host.docker.internal:host-gatew
 
 ## compose
 ```yaml
+version: "3.8"
+
 services:
   open-webui:
     image: ghcr.io/open-webui/open-webui:cuda
@@ -256,18 +258,18 @@ services:
     restart: always
     ports:
       - "3000:8080"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: [gpu]
     volumes:
       - open-webui:/app/backend/data
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    runtime: nvidia  # ✅ Spécifie le runtime requis pour GPU Jetson
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all  # ✅ Optionnel mais recommandé
+      - NVIDIA_DRIVER_CAPABILITIES=all  # ✅ Assure un accès complet
 
 volumes:
   open-webui:
+
 ```
 sudo docker compose up -d
 
