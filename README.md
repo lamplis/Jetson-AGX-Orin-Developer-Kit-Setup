@@ -763,7 +763,7 @@ NVIDIA héberge les sources du noyau sur son serveur Git. Voici comment récupé
 liste des tags ici : https://nv-tegra.nvidia.com/r/gitweb?p=3rdparty/canonical/linux-jammy.git;a=summary
 ```
 git clone --depth 1 --branch rel-36_eng_2025-02-28 https://nv-tegra.nvidia.com/r/3rdparty/canonical/linux-jammy.git
-git clone ssh://nv-tegra.nvidia.com:13002/3rdparty/canonical/linux-jammy
+git clone --branch rel-36_eng_2025-02-28 https://nv-tegra.nvidia.com/3rdparty/canonical/linux-jammy/
 
 ```
 
