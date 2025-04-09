@@ -386,6 +386,9 @@ volumes:
 
 # Listing all files for prompt
 
+Solution depuis le Jetson:
+https://github.com/jetsonhacks/jetson-orin-kernel-builder/tree/main
+
 J'utilise la version 22.04 d'ubuntu sur un pc classique avec le sdkmanager de nvidia. 
 Je possède  un Jetson AGX Orin [64GB developer kit version], P3701-0005 module, P3737-0000 carrier board avec le JetPack 6.2 installé dessus. 
 Je souhaite utiliser le disque NVME de 2to en principal
@@ -398,6 +401,7 @@ export CROSS_COMPILE=$TOOLCHAIN_PATH/bin/aarch64-buildroot-linux-gnu-
 export NVIDIA_INSTALL_PATH=~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS
 export INSTALL_MOD_PATH=$NVIDIA_INSTALL_PATH/Linux_for_Tegra/rootfs/
 export KERNEL_SRC=$NVIDIA_INSTALL_PATH/Linux_for_Tegra/source/kernel/kernel-jammy-src
+export KERNEL_HEADERS=$KERNEL_SRC
 
 Utilise les procédures et l'arborescence des sources jointes au projet.
 
@@ -444,9 +448,10 @@ make O=../build ARCH=arm64 CROSS_COMPILE=$CROSS_COMPILE defconfig
 
 # Compilation
 make -j$(nproc) O=../build ARCH=arm64 CROSS_COMPILE=$CROSS_COMPILE
+sudo -E make install -C kernel
 
 # Copier l’image du kernel compilé
-cp ../build/arch/arm64/boot/Image $NVIDIA_INSTALL_PATH/Linux_for_Tegra/kernel/Image
+cp $KERNEL_SRC/../build/arch/arm64/boot/Image $NVIDIA_INSTALL_PATH/Linux_for_Tegra/kernel/Image
 ```
 
 ---
@@ -459,12 +464,30 @@ sudo -E make O=../build ARCH=arm64 INSTALL_MOD_PATH=$INSTALL_MOD_PATH modules_in
 
 ---
 
-### 4. 📦 Mettre à jour l'initrd
+### 4.1 📦 Building the DTBs
+
+Go to the build directory:
+
+```bash
+cd $KERNEL_SRC
+make O=../build ARCH=arm64 CROSS_COMPILE=$CROSS_COMPILE dtbs
+```
+
+Run the following commands to install:
+
+```bash
+cp $KERNEL_SRC/../build/arch/arm64/boot/dts/nvidia/*.dtb $NVIDIA_INSTALL_PATH/Linux_for_Tegra/kernel/dtb/
+```
+
+### 4.2 📦 Mettre à jour l'initrd
 
 ```bash
 cd $NVIDIA_INSTALL_PATH/Linux_for_Tegra
 sudo ./tools/l4t_update_initrd.sh
 ```
+
+
+
 
 ---
 
@@ -473,12 +496,15 @@ sudo ./tools/l4t_update_initrd.sh
 > ⚠️ Le Jetson doit être en **mode recovery**, branché en USB-C
 
 ```bash
-sudo BOARDID=3767 BOARDSKU=0000 FAB=TS1 ./tools/kernel_flash/l4t_initrd_flash.sh \
+cd $NVIDIA_INSTALL_PATH/Linux_for_Tegra
+
+sudo BOARDID=3701 BOARDSKU=0005 FAB=000 \
+  ./tools/kernel_flash/l4t_initrd_flash.sh \
   -c tools/kernel_flash/flash_l4t_t234_nvme.xml \
   --external-device nvme0n1p1 \
   --direct nvme0n1 \
   --showlogs \
-  jetson-orin-nano-devkit external
+  jetson-agx-orin-devkit external
 ```
 
 > Le nom de config `jetson-orin-nano-devkit` est valide pour **Orin NX sur carte P3767**.  
