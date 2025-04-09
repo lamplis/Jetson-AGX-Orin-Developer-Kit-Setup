@@ -385,6 +385,130 @@ volumes:
 ```
 
 # Listing all files for prompt
+
+J'utilise la version 22.04 d'ubuntu sur un pc classique avec le sdkmanager de nvidia. 
+Je possède  un Nvidia Jetson Orin NX 64go Developer Kit avec le JetPack 6.2 installé dessus. 
+Je souhaite utiliser le disque NVME de 2to en principal
+Je ne veux pas utiliser de temps réel.
+je souhaite flash un kernel spécifique tag "rel-36_eng_2025-02-28"
+
+Voilà mes variables :
+export TOOLCHAIN_PATH=~/l4t-gcc/aarch64--glibc--stable-2022.08-1
+export CROSS_COMPILE=$TOOLCHAIN_PATH/bin/aarch64-buildroot-linux-gnu-
+export NVIDIA_INSTALL_PATH=~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS
+export INSTALL_MOD_PATH=$NVIDIA_INSTALL_PATH/Linux_for_Tegra/rootfs/
+export KERNEL_SRC=$NVIDIA_INSTALL_PATH/Linux_for_Tegra/source/kernel/kernel-jammy-src
+
+Utilise les procédures et l'arborescence des sources jointes au projet.
+
+La configuration est ici : $KERNEL_SRC/arch/arm64/configs/defconfig
+
+Voici **toutes les étapes** pour compiler et flasher un **kernel personnalisé (`rel-36_eng_2025-02-28`)** sur un **Jetson Orin NX 64GB** avec rootfs sur un **NVMe de 2 To**, **sans temps réel**, en utilisant **JetPack 6.2**.
+
+---
+
+## 🔧 Étapes complètes
+
+### 0. 📥 Préparer les variables d'environnement
+
+```bash
+export TOOLCHAIN_PATH=~/l4t-gcc/aarch64--glibc--stable-2022.08-1
+export CROSS_COMPILE=$TOOLCHAIN_PATH/bin/aarch64-buildroot-linux-gnu-
+export NVIDIA_INSTALL_PATH=~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS
+export INSTALL_MOD_PATH=$NVIDIA_INSTALL_PATH/Linux_for_Tegra/rootfs/
+export KERNEL_SRC=$NVIDIA_INSTALL_PATH/Linux_for_Tegra/source/kernel/kernel-jammy-src
+```
+
+### 1. 📥 Synchroniser les sources du noyau
+
+```bash
+cd $NVIDIA_INSTALL_PATH/Linux_for_Tegra/source
+./source_sync.sh -k -t rel-36_eng_2025-02-28
+```
+
+Cela crée les sources du kernel dans :
+
+```bash
+$KERNEL_SRC  # soit ~/nvidia/.../source/kernel/kernel-jammy-src
+```
+
+---
+
+### 2. ⚙️ Compiler le kernel et ses modules
+
+```bash
+cd $KERNEL_SRC
+
+# Configuration de base
+make O=../build ARCH=arm64 CROSS_COMPILE=$CROSS_COMPILE defconfig
+
+# Compilation
+make -j$(nproc) O=../build ARCH=arm64 CROSS_COMPILE=$CROSS_COMPILE
+
+# Copier l’image du kernel compilé
+cp ../build/arch/arm64/boot/Image $NVIDIA_INSTALL_PATH/Linux_for_Tegra/kernel/Image
+```
+
+---
+
+### 3. 📦 Installer les modules dans le rootfs
+
+```bash
+sudo -E make O=../build ARCH=arm64 INSTALL_MOD_PATH=$INSTALL_MOD_PATH modules_install
+```
+
+---
+
+### 4. 📦 Mettre à jour l'initrd
+
+```bash
+cd $NVIDIA_INSTALL_PATH/Linux_for_Tegra
+sudo ./tools/l4t_update_initrd.sh
+```
+
+---
+
+### 5. 🚀 Flasher le Jetson Orin NX avec le NVMe comme rootfs
+
+> ⚠️ Le Jetson doit être en **mode recovery**, branché en USB-C
+
+```bash
+sudo BOARDID=3767 BOARDSKU=0000 FAB=TS1 ./tools/kernel_flash/l4t_initrd_flash.sh \
+  -c tools/kernel_flash/flash_l4t_t234_nvme.xml \
+  --external-device nvme0n1p1 \
+  --direct nvme0n1 \
+  --showlogs \
+  jetson-orin-nano-devkit external
+```
+
+> Le nom de config `jetson-orin-nano-devkit` est valide pour **Orin NX sur carte P3767**.  
+> Vérifie avec `ls Linux_for_Tegra/*.conf` si un lien symbolique pointe vers `p3767-0000` (ce qui est le cas ici).
+
+---
+
+### 6. ✅ Vérification post-flash
+
+Une fois redémarré :
+
+```bash
+# Vérifie que le rootfs est bien sur NVMe
+df -h /
+
+# Vérifie le kernel en cours
+uname -a
+```
+
+Tu devrais voir un noyau avec une date proche de fin février 2025 (correspondant au tag).
+
+---
+
+Souhaites-tu que je t'en fasse un **script `.sh` prêt à exécuter**, basé sur ça ?
+
+
+
+
+
+~/build_and_flash_kernel.sh
 ```shell
 echo '$ sudo tree -a -L 3 ~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS/Linux_for_Tegra' > ~/Téléchargements/arborescence_Linux_for_Tegra.txt && \
 sudo tree -a -L 3 ~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS/Linux_for_Tegra >> ~/Téléchargements/arborescence_Linux_for_Tegra.txt
@@ -415,6 +539,7 @@ cd ~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS/Linux_for_Tegra
 ```shell
 export TOOLCHAIN_PATH=/home/lamplis/l4t-gcc/aarch64--glibc--stable-2022.08-1
 export NVIDIA_INSTALL_PATH=/home/lamplis/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS
+export KERNEL_SRC=kernel/kernel-5.10
 ```
 Jetson Linux Toolchain https://docs.nvidia.com/jetson/archives/r36.2/DeveloperGuide/AT/JetsonLinuxDevelopmentTools.html
 Extracting the Toolchain
