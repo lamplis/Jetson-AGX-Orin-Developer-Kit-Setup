@@ -387,7 +387,7 @@ volumes:
 # Listing all files for prompt
 
 J'utilise la version 22.04 d'ubuntu sur un pc classique avec le sdkmanager de nvidia. 
-Je possède  un Nvidia Jetson Orin NX 64go Developer Kit avec le JetPack 6.2 installé dessus. 
+Je possède  un Jetson AGX Orin [64GB developer kit version], P3701-0005 module, P3737-0000 carrier board avec le JetPack 6.2 installé dessus. 
 Je souhaite utiliser le disque NVME de 2to en principal
 Je ne veux pas utiliser de temps réel.
 je souhaite flash un kernel spécifique tag "rel-36_eng_2025-02-28"
