@@ -384,6 +384,19 @@ volumes:
       device: /path/on/local/disk
 ```
 
+# Listing all files for prompt
+```shell
+echo '$ sudo tree -a -L 3 ~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS/Linux_for_Tegra' > ~/Téléchargements/arborescence_Linux_for_Tegra.txt && \
+sudo tree -a -L 3 ~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS/Linux_for_Tegra >> ~/Téléchargements/arborescence_Linux_for_Tegra.txt
+```
+voici ci-joint l'arborecence des sources.
+je souhaite flash un kernel spécifique tag "rel-36_eng_2025-02-28"
+
+```shell
+echo '$ sudo find ~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS/Linux_for_Tegra' > ~/Téléchargements/contenu_Linux_for_Tegra.txt && \
+sudo find ~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS/Linux_for_Tegra >> ~/Téléchargements/contenu_Linux_for_Tegra.txt
+```
+
 # Fix Kernel for Docker then Flash Orin AGX
 ```shell
 sudo apt install git-core build-essential bc
@@ -391,7 +404,10 @@ sudo apt install git-core build-essential bc
 Finding last tag here https://nv-tegra.nvidia.com/r/gitweb?p=3rdparty/canonical/linux-jammy.git;a=summary
 then sync
 ```shell
-~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS/Linux_for_Tegra/source$ ./source_sync.sh -k -t rel-36_eng_2025-02-28
+cd ~/nvidia/nvidia_sdk/JetPack_6.2_Linux_JETSON_AGX_ORIN_TARGETS/Linux_for_Tegra/source
+./source_sync.sh -k -t rel-36_eng_2025-02-28
+
+./source_sync.sh -k -t l4t-l4t-r36.4.4_eng_2025-04-02
 ```
 
 # Building the Jetson Linux Kernel
