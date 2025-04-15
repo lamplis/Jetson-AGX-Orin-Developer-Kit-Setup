@@ -60,6 +60,7 @@ cd $REPO_DIR/python
 pip uninstall -y setuptools
 pip install 'setuptools==68.2.2'
 pip install --upgrade pip wheel
+pip install --upgrade packaging
 
 pip install -r install_requirements.txt
 python setup.py bdist_wheel
