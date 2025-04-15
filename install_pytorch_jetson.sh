@@ -29,6 +29,8 @@ cd ~/Workspace/pytorch_wheels
 python3 -m pip install torch-2.3.0-cp310-cp310-linux_aarch64.whl
 python3 -m pip install torchvision-0.18.0a0+6043bc2-cp310-cp310-linux_aarch64.whl
 python3 -m pip install torchaudio-2.3.0+952ea74-cp310-cp310-linux_aarch64.whl
+python3 -m pip install matplotlib
+
 
 echo "✅ Vérification de l'installation..."
 python3 -c "import torch; print('Torch version:', torch.__version__); print('CUDA dispo:', torch.cuda.is_available()); print('cuDNN version:', torch.backends.cudnn.version())"
