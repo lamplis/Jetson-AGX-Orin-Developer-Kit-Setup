@@ -1,5 +1,7 @@
 # Jetson-AGX-Orin-Developer-Kit-Setup
 Setup guide for Jetson AGX Orin Developer Kit using WSL2 Windows 11
+Great presentation: https://docs.ultralytics.com/fr/guides/nvidia-jetson/#what-is-nvidia-jetpack
+
 
 # 1 Install Docker Desktop
 
