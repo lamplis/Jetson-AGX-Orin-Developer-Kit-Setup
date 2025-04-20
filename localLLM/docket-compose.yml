@@ -1,0 +1,33 @@
+services:
+  ollama:
+    image: dustynv/ollama:r36.4.0
+    container_name: ollama
+    runtime: nvidia
+    network_mode: "host"
+    shm_size: "16g"
+    command: ["ollama", "serve"]
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_MODELS=/data/models/ollama/models
+      - OLLAMA_LOGS=/data/logs/ollama.log
+      - OLLAMA_NUM_GPU_LAYERS=16         # Adjust if model loading fails
+      - OLLAMA_CONTEXT_LENGTH=8192       # Max prompt size (more = more RAM)
+      - OLLAMA_MAX_LOADED_MODELS=1       # Prevent RAM overuse
+      - OLLAMA_DEBUG=false
+    volumes:
+      - "${HOME}/data:/data"
+      - "/var/run/docker.sock:/var/run/docker.sock" # Nécessaire pour certains backends Ollama
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/run/jtop.sock:/run/jtop.sock"  # Optional: for jetson-stats
+    mem_limit: 32g
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:latest-cuda
+    container_name: open-webui
+    network_mode: "host"
+    restart: always
+    environment:
+      - OLLAMA_BASE_URL=http://127.0.0.1:11434
+    volumes:
+      - "${HOME}/open-webui:/app/backend/data"
