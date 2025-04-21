@@ -99,7 +99,7 @@ build_python() {
   pip3 uninstall -y ctranslate2 setuptools pybind11
   sudo rm -rf ~/.local/lib/python3.10/site-packages/ctranslate2*
   
-  pip3 install 'setuptools==68.2.2' 'matplotlib==3.10.1' 'pybind11<2.12.0' --force-reinstall 
+  pip3 install 'setuptools==68.2.2' 'matplotlib==3.10.1' 'pybind11<2.0' --force-reinstall 
   pip3 install --upgrade pip wheel
  
   #pip3 install --no-build-isolation --force-reinstall --no-cache-dir -r install_requirements.txt
