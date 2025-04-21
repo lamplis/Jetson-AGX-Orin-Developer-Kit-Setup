@@ -1,33 +1,90 @@
 services:
   ollama:
-    image: dustynv/ollama:r36.4.0
+    stdin_open: true
+    tty: true
+    image: dustynv/ollama:r36.4.0-cu128-24.04
+    pull_policy: always
     container_name: ollama
-    runtime: nvidia
-    network_mode: "host"
-    shm_size: "16g"
-    command: ["ollama", "serve"]
+    restart: unless-stopped
+    #runtime: nvidia
+    #network_mode: "host"
+    #shm_size: "16g"
+    #command: ["ollama", "serve"]
+    #command: ["ollama", "serve", "--no-kv-offload"]
     environment:
-      - OLLAMA_HOST=0.0.0.0
-      - OLLAMA_MODELS=/data/models/ollama/models
-      - OLLAMA_LOGS=/data/logs/ollama.log
-      - OLLAMA_NUM_GPU_LAYERS=16         # Adjust if model loading fails
-      - OLLAMA_CONTEXT_LENGTH=8192       # Max prompt size (more = more RAM)
-      - OLLAMA_MAX_LOADED_MODELS=1       # Prevent RAM overuse
+      #- OLLAMA_PRELOAD_MODELS=deepseek-r1:32b-qwen-distill-q4_K_M
+      - OLLAMA_MODELS=/root/.ollama
+      - OLLAMA_HOST=0.0.0.0:9000
+      - OLLAMA_CONTEXT_LEN=2048		# Max prompt size (more = more RAM) 4096 8192
+      - OLLAMA_PREFILL_CHUNK_SIZE=128
+      - OLLAMA_MAX_BATCH_SIZE=1
+      - OLLAMA_SEED=42			# To get the same result at every executions
+      - OLLAMA_KV_CACHE_TYPE=f16	# garantit que le cache K/V est en float16 (sur GPU si possible)
+      #- OLLAMA_GPU_OVERHEAD=134217728  	# Réserve 128 MB de marge sur le GPU
+      - OLLAMA_NUM_GPU_LAYERS=6        # Adjust if model loading fails
+      - OLLAMA_MAX_LOADED_MODELS=1      # Prevent RAM overuse
+      #- OLLAMA_EXTRA_FLAGS="--no-kv-offload"
+      - OLLAMA_FLASH_ATTENTION=true	# accélère drastiquement le pré-remplissage (si pris en charge)
+      
+      - OLLAMA_LOGS=/root/.ollama/ollama.log
+      - DOCKER_PULL=always
+      - HF_TOKEN=${HF_TOKEN}
+      - HF_HUB_CACHE=/root/.cache/huggingface
       - OLLAMA_DEBUG=false
     volumes:
-      - "${HOME}/data:/data"
+      - /mnt/nvme/cache/ollama:/root/.ollama
+      - /mnt/nvme/cache:/root/.cache
+      - /dev:/dev # Accès au GPU et autres périphériques
+      - /tmp:/tmp # Pour les fichiers temporaires
       - "/var/run/docker.sock:/var/run/docker.sock" # Nécessaire pour certains backends Ollama
       - "/etc/localtime:/etc/localtime:ro"
       - "/etc/timezone:/etc/timezone:ro"
       - "/run/jtop.sock:/run/jtop.sock"  # Optional: for jetson-stats
-    mem_limit: 32g
+    #mem_limit: 32g
+    labels:
+      com.nvidia.cuda.driver: "latest"
+      com.nvidia.gpu: all  # or spécifie une liste d'ID de GPU, e.g., "0,1"
+    deploy:
+      resources:
+        limits:
+          cpus: "12"  # Utiliser tous les cœurs (ou ajuste selon tes besoins)
+          memory: "56G" # Allouer la majorité de la RAM (ajuste selon tes besoins et disponibilité)
+          #nvidia_gpu: 1 # Allouer le GPU
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities:
+                - gpu
+    ports:
+      - 9000:9000
+    networks:
+      - ollama-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://0.0.0.0:9000/v1/models"]
+      interval: 20s
+      timeout: 60s
+      retries: 45
+      start_period: 15s
+
+
+
+
 
   open-webui:
     image: ghcr.io/open-webui/open-webui:latest-cuda
     container_name: open-webui
-    network_mode: "host"
+    #network_mode: "host"
     restart: always
     environment:
-      - OLLAMA_BASE_URL=http://127.0.0.1:11434
+      - OLLAMA_BASE_URL=http://ollama:9000
     volumes:
       - "${HOME}/open-webui:/app/backend/data"
+    ports:
+      - 8080:8080
+    networks:
+      - ollama-net
+      
+networks:
+  ollama-net:
+    driver: bridge
