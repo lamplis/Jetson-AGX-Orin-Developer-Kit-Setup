@@ -87,9 +87,9 @@ fi
 # Runtime configuration
 IMAGE="dustynv/ollama:r36.4.0-cu128-24.04"
 PROMPTS=(
-  "Décris en détail le fonctionnement d’un cerveau humain, depuis la perception d’un stimulus visuel jusqu’à la formulation d’une réponse verbale."
-  "Raconte l’histoire de la conquête spatiale de 1950 à 2050 comme si c’était un roman d’anticipation."
-  "Imagine un monde où l’humanité a abandonné toutes les énergies fossiles. Décris la transition énergétique, les impacts géopolitiques, économiques et sociétaux en détail."
+  "Réponds toujours en francais. Décris en détail le fonctionnement d’un cerveau humain, depuis la perception d’un stimulus visuel jusqu’à la formulation d’une réponse verbale."
+  "Réponds toujours en francais. Raconte l’histoire de la conquête spatiale de 1950 à 2050 comme si c’était un roman d’anticipation."
+  "Réponds toujours en francais. Imagine un monde où l’humanité a abandonné toutes les énergies fossiles. Décris la transition énergétique, les impacts géopolitiques, économiques et sociétaux en détail."
 )
 
 N_PREDICT=50
@@ -155,6 +155,7 @@ for kv in "${KV_CACHE_TYPES[@]}"; do
               -e OLLAMA_HOST=0.0.0.0:9000 \\n
               -e OLLAMA_FLASH_ATTENTION=true \\n
               -e OLLAMA_DEBUG=false \\n
+              -e OLLAMA_SEED=42 \\n
               -e HF_TOKEN='$HF_TOKEN' \\n
               -e HF_HUB_CACHE=/root/.cache/huggingface \\n
               -v /mnt/nvme/cache/ollama:/root/.ollama \\n
@@ -181,6 +182,7 @@ for kv in "${KV_CACHE_TYPES[@]}"; do
               -e OLLAMA_HOST=0.0.0.0:9000 \
               -e OLLAMA_FLASH_ATTENTION=true \
               -e OLLAMA_DEBUG=false \
+              -e OLLAMA_SEED=42 \
               -e HF_TOKEN="$HF_TOKEN" \
               -e HF_HUB_CACHE=/root/.cache/huggingface \
               -v /mnt/nvme/cache/ollama:/root/.ollama \
