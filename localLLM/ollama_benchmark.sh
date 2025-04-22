@@ -85,12 +85,18 @@ fi
 
 # Runtime configuration
 IMAGE="dustynv/ollama:r36.4.0-cu128-24.04"
-PROMPT="Explique brièvement le principe de la gravité quantique."
+PROMPTS=(
+  "Décris en détail le fonctionnement d’un cerveau humain, depuis la perception d’un stimulus visuel jusqu’à la formulation d’une réponse verbale."
+  "Raconte l’histoire de la conquête spatiale de 1950 à 2050 comme si c’était un roman d’anticipation."
+  "Imagine un monde où l’humanité a abandonné toutes les énergies fossiles. Décris la transition énergétique, les impacts géopolitiques, économiques et sociétaux en détail."
+)
+
 N_PREDICT=50
 HOST_PORT=9000
 
 LOG_CSV="$BASE_DIR/${TIMESTAMP}_${MODEL_ID_SAFE}_benchmark.csv"
-echo "model;context_len;prefill_chunk;batch_size;kv_cache_type;gpu_layers;threads;avg_time_s;status" > "$LOG_CSV"
+echo "model;context_len;prefill_chunk;batch_size;kv_cache_type;gpu_layers;threads;prompt1_s;prompt2_s;prompt3_s;avg_time_s;status" > "$LOG_CSV"
+
 
 
 
@@ -193,7 +199,7 @@ for kv in "${KV_CACHE_TYPES[@]}"; do
               echo docker logs "$CONTAINER_NAME"
               LOGFILE="$DEBUG_LOG_DIR/${DATE_PREFIX}-$context-$chunk-$batch-$kv-$layers-$threads.log"
               docker logs "$CONTAINER_NAME" &> "$LOGFILE" || echo "⚠️ Failed to fetch logs." >> "$LOGFILE"
-              echo "$context;$chunk;$batch;$kv;$layers;$threads;-1;CRASH" >> "$LOG_CSV"
+              echo "$MODEL_ID_SAFE;$context;$chunk;$batch;$kv;$layers;$threads;-1;-1;-1;-1;CRASH" >> "$LOG_CSV"
               docker stop "$CONTAINER_NAME" &>/dev/null || true
               docker rm -f "$CONTAINER_NAME" &>/dev/null || true
               docker rmi -f "$IMAGE" 2>/dev/null || true
@@ -208,15 +214,20 @@ for kv in "${KV_CACHE_TYPES[@]}"; do
 
             # ⏱️ Run 3 test requests and compute average
             TIMES=()
-            for i in 1 2 3; do
+            for i in "${!PROMPTS[@]}"; do
+              PROMPT="${PROMPTS[$i]}"
+              echo "⏱️ Running test request $((i+1)) with prompt: ${PROMPT:0:50}..."
               START=$(date +%s)
               curl -s -X POST http://localhost:$HOST_PORT/api/generate \
                 -H "Content-Type: application/json" \
                 -d '{"model":"'"$MODEL"'","prompt":"'"$PROMPT"'","n_predict":'"$N_PREDICT"',"stream":false}' > /dev/null
-              echo "⏱️ Run test resquest $i"
               END=$(date +%s)
               TIMES+=($((END - START)))
             done
+            PROMPT1_TIME=${TIMES[0]}
+            PROMPT2_TIME=${TIMES[1]}
+            PROMPT3_TIME=${TIMES[2]}
+
 
             docker stop "$CONTAINER_NAME" > /dev/null
 
@@ -227,7 +238,8 @@ for kv in "${KV_CACHE_TYPES[@]}"; do
             STATUS="OK"
             if [ "$AVG" -gt 30 ]; then STATUS="SLOW"; fi
 
-            echo "$MODEL_ID_SAFE;$context;$chunk;$batch;$kv;$layers;$threads;$AVG;$STATUS" >> "$LOG_CSV"
+            echo "$MODEL_ID_SAFE;$context;$chunk;$batch;$kv;$layers;$threads;$PROMPT1_TIME;$PROMPT2_TIME;$PROMPT3_TIME;$AVG;$STATUS" >> "$LOG_CSV"
+
           done
         done
       done
