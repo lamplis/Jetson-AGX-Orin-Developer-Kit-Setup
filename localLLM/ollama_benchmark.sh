@@ -120,10 +120,10 @@ for kv in "${KV_CACHE_TYPES[@]}"; do
   for batch in "${BATCH_SIZES[@]}"; do
     for context in "${CONTEXT_LENS[@]}"; do
       for chunk in "${PREFILL_CHUNKS[@]}"; do
-        for threads in "${THREADS[@]}"; do
-          for layers in "${GPU_LAYERS[@]}"; do
+        for layers in "${GPU_LAYERS[@]}"; do
+          for threads in "${THREADS[@]}"; do
 
-            CONTAINER_NAME="ollama-bench-$context-$chunk-$batch-$kv-$layers"
+            CONTAINER_NAME="ollama-bench-$context-$chunk-$batch-$kv-$layers-$threads"
             docker rm -f "$CONTAINER_NAME" &>/dev/null || true
 
             echo ""
