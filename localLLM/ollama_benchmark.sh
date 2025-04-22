@@ -62,6 +62,7 @@ if [[ "$1" == "--bg" ]]; then
   shift
   echo "🚀 Launching in background..."
   echo "📄 Log file: $LOG_FILE"
+  echo "tail -f $LOG_FILE"
   nohup "$0" "$@" > "$LOG_FILE" 2>&1 &
   echo "📍 PID: $!"
   exit 0
@@ -216,13 +217,24 @@ for kv in "${KV_CACHE_TYPES[@]}"; do
             TIMES=()
             for i in "${!PROMPTS[@]}"; do
               PROMPT="${PROMPTS[$i]}"
-              echo "⏱️ Running test request $((i+1)) with prompt: ${PROMPT:0:50}..."
+              PROMPT_LABEL="Prompt $((i+1))"
+            
+              echo "" >> "$LOG_FILE"
+              echo "🔹 $PROMPT_LABEL : $PROMPT" >> "$LOG_FILE"
+            
               START=$(date +%s)
-              curl -s -X POST http://localhost:$HOST_PORT/api/generate \
+              RESPONSE=$(curl -s -X POST http://localhost:$HOST_PORT/api/generate \
                 -H "Content-Type: application/json" \
-                -d '{"model":"'"$MODEL"'","prompt":"'"$PROMPT"'","n_predict":'"$N_PREDICT"',"stream":false}' > /dev/null
+                -d '{"model":"'"$MODEL"'","prompt":"'"$PROMPT"'","n_predict":'"$N_PREDICT"',"stream":false}')
               END=$(date +%s)
-              TIMES+=($((END - START)))
+            
+              DURATION=$((END - START))
+              TIMES+=($DURATION)
+            
+              echo "⏱️ Duration: ${DURATION}s" >> "$LOG_FILE"
+              echo "📝 Response:" >> "$LOG_FILE"
+              echo "$RESPONSE" | fold -s -w 120 >> "$LOG_FILE"
+              echo "----------------------------------------" >> "$LOG_FILE"
             done
             PROMPT1_TIME=${TIMES[0]}
             PROMPT2_TIME=${TIMES[1]}
