@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -e   # abort as soon as any command fails
 
+# Scripts : https://gitee.com/zhanghongwei_cmiot/DeepFaceLab_Linux.git
+# Guide : https://github.com/1lmao/Deep-Face-Lab
+
 ###############################################################################
 # 0) “edit” mode ─ open the three main project files in Gedit, then exit
 ###############################################################################
