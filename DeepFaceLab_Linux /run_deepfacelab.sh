@@ -35,6 +35,8 @@ docker compose --progress=plain build dfl
 echo "🚀  Starting the container — type exit to return to the host shell."
 docker compose run --rm dfl
 
+# ls /opt/DeepFaceLab_Linux/scripts/
+
 echo
 echo "ℹ️  Next time you can jump straight in with:"
 echo "    docker compose run --rm dfl"
