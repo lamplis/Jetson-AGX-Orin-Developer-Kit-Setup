@@ -1,0 +1,62 @@
+# syntax=docker/dockerfile:1.7
+
+###############################################################################
+# ---------- build-time arguments with sensible defaults --------------------
+###############################################################################
+ARG L4T_TAG=r35.2.1        
+# Forwarded from .env → docker-compose
+ARG HOST_UID=1000          
+ARG HOST_GID=1000
+
+###############################################################################
+# ---------- Stage 1 :  DeepFaceLab runtime image ----------------------------
+###############################################################################
+FROM nvcr.io/nvidia/l4t-ml:${L4T_TAG}-py3
+# make the build args visible in this stage
+ARG HOST_UID
+ARG HOST_GID
+
+# ------------------------------------------------ system packages ----------
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        git wget curl ffmpeg build-essential cmake nano \
+        libhdf5-serial-dev hdf5-tools python3-h5py \
+        pkg-config libhdf5-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# ------------------------------------------------ numpy + TensorFlow -------
+RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
+    pip3 install --upgrade pip && \
+    pip3 install --no-cache-dir numpy==1.19.5 && \
+    pip3 install \
+      https://developer.download.nvidia.com/compute/redist/jp/v502/tensorflow/\
+tensorflow-1.15.5+nv22.12-cp38-cp38-linux_aarch64.whl
+
+# ------------------------------------------------ DeepFaceLab code ---------
+WORKDIR /opt
+
+RUN git clone --depth 1 \
+        https://gitee.com/zhanghongwei_cmiot/DeepFaceLab_Linux.git && \
+    git clone --depth 1 \
+        https://github.com/1lmao/Deep-Face-Lab.git DeepFaceLab
+
+# ------------------------------------------------ extra Python deps --------
+RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
+    pip3 install --no-cache-dir --no-deps \
+        keras==2.3.1 tqdm==4.* opencv-python-headless==4.5.*
+
+RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
+    pip3 install --no-cache-dir \
+        scikit-image==0.19.3 scikit-learn==0.24.*
+
+# ------------------------------------------------ create user --------------
+RUN groupadd -g ${HOST_GID} dflgroup && \
+    useradd  -m -u ${HOST_UID} -g dflgroup dfluser
+
+# point pip’s cache to the new user’s home for clean interactive installs
+ENV PIP_CACHE_DIR=/home/dfluser/.cache/pip
+
+USER dfluser
+WORKDIR /workspace
+CMD ["/bin/bash"]
