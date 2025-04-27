@@ -47,6 +47,8 @@ docker compose --progress=plain build $BUILD_ARGS dfl
 echo "🚀  Starting the container — type exit to return to the host shell."
 docker compose run --rm dfl
 
+# docker compose run --rm --user root dfl
+
 echo
 echo "ℹ️  Next time you can jump straight in with:"
 echo "    docker compose run --rm dfl"
