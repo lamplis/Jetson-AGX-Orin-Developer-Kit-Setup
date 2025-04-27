@@ -97,6 +97,11 @@ cd ~/Downloads/
 sudo mkdir -p /workspace/DeepFaceLab/model_generic_xseg
 sudo unzip ~/Downloads/Xseg14m.zip -d ~/Workspace/DF/workspace/DeepFaceLab/model_generic_xseg/
 
+./5_XSeg_data_dst_mask_apply.sh => Exception: /workspace/model/XSeg_256.npy does not exists.
+sudo mkdir -p ~/Workspace/DF/workspace/model
+sudo unzip ~/Downloads/Xseg14m.zip -d ~/Workspace/DF/workspace/model/
+
+
 télécharger ici : https://github.com/iperov/DeepFaceLab/releases/tag/DF.wf.288res.384.92.72.22
 cd ~/Downloads/
 sudo mkdir -p /workspace/DeepFaceLab/model_generic_xseg
