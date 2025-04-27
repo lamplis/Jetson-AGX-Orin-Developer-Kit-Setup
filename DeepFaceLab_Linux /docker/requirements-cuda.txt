@@ -1,0 +1,29 @@
+# DeepFaceLab requirements optimized for Jetson (aarch64)
+
+# Progress bar
+tqdm
+
+# Math libs
+numpy>=1.20,<1.24
+numexpr
+h5py>=3.10.0
+
+# OpenCV for image operations (headless, lighter and ARM64 compatible)
+opencv-python-headless==4.5.*
+
+# Video processing
+ffmpeg-python==0.1.17
+
+# Image processing
+scikit-image==0.19.3
+scipy==1.10.0
+
+# Terminal formatting
+colorama
+
+# TensorFlow NVIDIA build
+# https://developer.download.nvidia.com/compute/redist/jp/v61/tensorflow/tensorflow-2.16.1+nv24.08-cp310-cp310-linux_aarch64.whl
+# https://developer.download.nvidia.com/compute/redist/jp/v502/tensorflow/tensorflow-2.10.1+nv22.12-cp38-cp38-linux_aarch64.whl
+
+# Export models
+tf2onnx==1.9.3
