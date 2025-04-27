@@ -1,62 +1,74 @@
 # syntax=docker/dockerfile:1.7
 
 ###############################################################################
-# ---------- build-time arguments with sensible defaults --------------------
+# --------- Build arguments --------------------------------------------------
 ###############################################################################
-ARG L4T_TAG=r35.2.1        
-# Forwarded from .env → docker-compose
-ARG HOST_UID=1000          
+ARG L4T_TAG=r35.2.1
+ARG HOST_UID=1000
 ARG HOST_GID=1000
 
 ###############################################################################
-# ---------- Stage 1 :  DeepFaceLab runtime image ----------------------------
+# --------- Base image --------------------------------------------------------
 ###############################################################################
 FROM nvcr.io/nvidia/l4t-ml:${L4T_TAG}-py3
-# make the build args visible in this stage
+
+# Pass the args into the build
 ARG HOST_UID
 ARG HOST_GID
 
-# ------------------------------------------------ system packages ----------
+###############################################################################
+# --------- System packages --------------------------------------------------
+###############################################################################
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get update && \
     apt-get install -y --no-install-recommends \
         git wget curl ffmpeg build-essential cmake nano \
-        libhdf5-serial-dev hdf5-tools python3-h5py \
-        pkg-config libhdf5-dev && \
+        libhdf5-serial-dev hdf5-tools python3-h5py pkg-config libhdf5-dev && \
     rm -rf /var/lib/apt/lists/*
 
-# ------------------------------------------------ numpy + TensorFlow -------
+###############################################################################
+# --------- Upgrade pip, setuptools, wheel -----------------------------------
+###############################################################################
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    pip3 install --upgrade pip && \
-    pip3 install --no-cache-dir numpy==1.19.5 && \
-    pip3 install \
-      https://developer.download.nvidia.com/compute/redist/jp/v502/tensorflow/\
-tensorflow-1.15.5+nv22.12-cp38-cp38-linux_aarch64.whl
+    pip3 install --upgrade pip setuptools wheel
 
-# ------------------------------------------------ DeepFaceLab code ---------
+###############################################################################
+# --------- Clone DeepFaceLab code --------------------------------------------
+###############################################################################
 WORKDIR /opt
 
-RUN git clone --depth 1 \
-        https://gitee.com/zhanghongwei_cmiot/DeepFaceLab_Linux.git && \
-    git clone --depth 1 \
-        https://github.com/1lmao/Deep-Face-Lab.git DeepFaceLab
+RUN git clone --depth 1 https://gitee.com/zhanghongwei_cmiot/DeepFaceLab_Linux.git && \
+    git clone --depth 1 https://github.com/iperov/DeepFaceLab.git DeepFaceLab
 
-# ------------------------------------------------ extra Python deps --------
+###############################################################################
+# --------- Prepare workspace and fix Python version references --------------
+###############################################################################
+RUN mkdir /workspace && \
+    cp -r /opt/DeepFaceLab_Linux/* /workspace/ && \
+    find /workspace/ -type f -name "*.sh" -exec sed -i 's/python3\.7/python3/g' {} + && \
+    chown -R 1000:1000 /workspace
+
+###############################################################################
+# --------- Python dependencies ----------------------------------------------
+###############################################################################
+WORKDIR /workspace
+
+COPY requirements-cuda.txt ./DeepFaceLab/requirements-cuda.txt
+
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    pip3 install --no-cache-dir --no-deps \
-        keras==2.3.1 tqdm==4.* opencv-python-headless==4.5.*
+    pip3 install --no-cache-dir --prefer-binary -r ./DeepFaceLab/requirements-cuda.txt
 
-RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    pip3 install --no-cache-dir \
-        scikit-image==0.19.3 scikit-learn==0.24.*
-
-# ------------------------------------------------ create user --------------
+###############################################################################
+# --------- Create non-root user ----------------------------------------------
+###############################################################################
 RUN groupadd -g ${HOST_GID} dflgroup && \
-    useradd  -m -u ${HOST_UID} -g dflgroup dfluser
+    useradd -m -u ${HOST_UID} -g dflgroup dfluser
 
-# point pip’s cache to the new user’s home for clean interactive installs
 ENV PIP_CACHE_DIR=/home/dfluser/.cache/pip
 
+###############################################################################
+# --------- Final setup ------------------------------------------------------
+###############################################################################
 USER dfluser
 WORKDIR /workspace
 CMD ["/bin/bash"]
