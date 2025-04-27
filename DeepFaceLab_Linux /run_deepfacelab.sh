@@ -48,6 +48,9 @@ echo "🚀  Starting the container — type exit to return to the host shell."
 docker compose run --rm dfl
 
 # docker compose run --rm --user root dfl
+# python3
+# import tensorflow as tf
+# print(tf.config.list_physical_devices('GPU'))
 
 echo
 echo "ℹ️  Next time you can jump straight in with:"
