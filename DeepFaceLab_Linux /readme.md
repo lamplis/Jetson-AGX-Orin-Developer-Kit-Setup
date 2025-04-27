@@ -68,3 +68,29 @@ pip3 install --no-cache-dir colorama numexpr
 
 ---
 
+#Debug error 
+
+dfluser@ea3bae47cad9:/workspace/scripts$ ./3_extract_image_from_data_dst.sh
+Traceback (most recent call last):
+  File "/workspace/DeepFaceLab/main.py", line 6, in <module>
+    from core.leras import nn
+  File "/workspace/DeepFaceLab/core/leras/__init__.py", line 1, in <module>
+    from .nn import nn
+  File "/workspace/DeepFaceLab/core/leras/nn.py", line 26, in <module>
+    from core.interact import interact as io
+  File "/workspace/DeepFaceLab/core/interact/__init__.py", line 1, in <module>
+    from .interact import interact
+  File "/workspace/DeepFaceLab/core/interact/interact.py", line 9, in <module>
+    import cv2
+  File "/usr/local/lib/python3.10/dist-packages/cv2/__init__.py", line 8, in <module>
+    from .cv2 import *
+ImportError: libavcodec-e61fde82.so.58.134.100: cannot open shared object file: No such file or directory
+dflus
+boot as root:
+docker compose run --rm --user root dfl
+
+apt-get update && apt-get install --reinstall -y libopencv-dev python3-opencv
+
+
+
+
