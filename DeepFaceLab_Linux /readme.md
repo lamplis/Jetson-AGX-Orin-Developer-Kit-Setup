@@ -91,6 +91,27 @@ docker compose run --rm --user root dfl
 
 apt-get update && apt-get install --reinstall -y libopencv-dev python3-opencv
 
+# Mettre le model XSeg
+here xseg 14M download it https://drive.google.com/file/d/1mvtdSlSP-SP6HFTEKy4RE63X6GnyY74w/view?usp=sharing
+cd ~/Downloads/
+sudo mkdir -p /workspace/DeepFaceLab/model_generic_xseg
+sudo unzip ~/Downloads/Xseg14m.zip -d ~/Workspace/DF/workspace/DeepFaceLab/model_generic_xseg/
+
+télécharger ici : https://github.com/iperov/DeepFaceLab/releases/tag/DF.wf.288res.384.92.72.22
+cd ~/Downloads/
+sudo mkdir -p /workspace/DeepFaceLab/model_generic_xseg
+sudo unzip DF.wf.288res.384.92.72.22.zip -d /workspace/DeepFaceLab/model_generic_xseg/
+
+
+#unzip to a "model" folder
+lamplis@ubuntu:~/Downloads$ ls model/
+new_SAEHD_data.dat         new_SAEHD_encoder.npy  SAEHD_default_options.dat
+new_SAEHD_decoder_dst.npy  new_SAEHD_inter.npy
+new_SAEHD_decoder_src.npy  new_SAEHD_summary.txt
+
+mkdir -p /workspace/DeepFaceLab/model_generic_xseg
+mv DeepFaceLab_XSeg_generic_wf/* /workspace/DeepFaceLab/model_generic_xseg/
+
 
 
 
