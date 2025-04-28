@@ -52,6 +52,11 @@ docker compose run --rm dfl
 # import tensorflow as tf
 # print(tf.config.list_physical_devices('GPU'))
 
+# Fix lib dependency issues
+# cd /usr/lib/aarch64-linux-gnu/ && \
+# ln -sf libQt5Core.so.5.15.3 libQt5Core-9e162752.so.5.15.0 && \
+# ldconfig
+
 echo
 echo "ℹ️  Next time you can jump straight in with:"
 echo "    docker compose run --rm dfl"
