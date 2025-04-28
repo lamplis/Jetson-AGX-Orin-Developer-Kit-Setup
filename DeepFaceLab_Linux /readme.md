@@ -96,22 +96,16 @@ apt-get update && apt-get install --reinstall -y libopencv-dev python3-opencv
 
 ## Mettre le model XSeg
 here xseg 14M download it https://drive.google.com/file/d/1mvtdSlSP-SP6HFTEKy4RE63X6GnyY74w/view?usp=sharing
-cd ~/Downloads/
-sudo mkdir -p /workspace/DeepFaceLab/model_generic_xseg
-sudo unzip ~/Downloads/Xseg14m.zip -d ~/Workspace/DF/workspace/DeepFaceLab/model_generic_xseg/
+cd ~/Workspace/DF/docker
+sudo mkdir -p ../workspace/DeepFaceLab/model_generic_xseg
+sudo unzip Xseg14m.zip -d ~/Workspace/DF/workspace/DeepFaceLab/model_generic_xseg/
 
 
-sudo mkdir -p ~/Workspace/DF/workspace/model
-sudo unzip ~/Downloads/Xseg14m.zip -d ~/Workspace/DF/workspace/model/
+## télécharger pretrained DF.wf.288res.384.92.72.22 : https://github.com/iperov/DeepFaceLab/releases/tag/DF.wf.288res.384.92.72.22
+cd ~/Workspace/DF/docker
+sudo mkdir -p ../workspace/model
+sudo unzip DF.wf.288res.384.92.72.22.zip -d ../workspace/
 
-
-
-
-
-télécharger ici : https://github.com/iperov/DeepFaceLab/releases/tag/DF.wf.288res.384.92.72.22
-cd ~/Downloads/
-sudo mkdir -p /workspace/DeepFaceLab/model_generic_xseg
-sudo unzip DF.wf.288res.384.92.72.22.zip -d /workspace/DeepFaceLab/model_generic_xseg/
 
 
 #unzip to a "model" folder
