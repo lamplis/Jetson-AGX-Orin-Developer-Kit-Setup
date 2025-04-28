@@ -53,9 +53,30 @@ docker compose run --rm dfl
 # print(tf.config.list_physical_devices('GPU'))
 
 # Fix lib dependency issues
+# ls /usr/lib/aarch64-linux-gnu/libcblas*
 # cd /usr/lib/aarch64-linux-gnu/ && \
 # ln -sf libQt5Core.so.5.15.3 libQt5Core-9e162752.so.5.15.0 && \
 # ldconfig
+
+# cd /opt/DeepFaceLab_Linux/scripts/ && ./3_extract_image_from_data_dst.sh
+# pip3 install --force-reinstall --no-cache-dir opencv-python-headless
+
+# Procédure « clean » en 4 commandes
+# 1) Désinstalle tous les wheels OpenCV éventuels
+# pip3 uninstall -y opencv-python opencv-python-headless opencv-contrib-python || true
+
+# 2) Supprime le répertoire résiduel déposé par le wheel (important)
+# rm -rf /usr/local/lib/python3.10/dist-packages/cv2*  \
+#        /usr/local/lib/python3.10/dist-packages/opencv*
+
+# 3) Nettoie les librairies OpenCV 4.8/4.10 éventuellement installées par apt
+# apt-get purge -y 'libopencv*-4.8*' 'libopencv*-4.9*' 'libopencv*-4.10*' || true
+# apt-get autoremove -y
+
+# 4) Installe la version Ubuntu (4.5.4) – sans dépendance cuDNN
+# apt-get update
+# apt-get install -y --no-install-recommends python3-opencv
+
 
 echo
 echo "ℹ️  Next time you can jump straight in with:"
