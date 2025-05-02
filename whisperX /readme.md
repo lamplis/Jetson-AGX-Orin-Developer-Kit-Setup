@@ -2,6 +2,11 @@
 
 https://github.com/m-bain/whisperX
 
+## Install PiP
+```shell
+sudo apt update && sudo apt install python3-pip -y
+```
+
 ## Install WhisperX
 You have several installation options:
 
