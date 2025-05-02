@@ -1,4 +1,4 @@
-# Basiv Installation for Ubuntu
+# My personnal Installation for Ubuntu
 
 https://github.com/m-bain/whisperX
 
