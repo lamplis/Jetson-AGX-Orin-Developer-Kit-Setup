@@ -6,7 +6,7 @@ https://github.com/m-bain/whisperX
 
 ## Install PiP & HugginFace downloader
 ```shell
-sudo apt update && sudo apt install python3-pip -y
+sudo apt update && sudo apt install python3-pip ffmpeg -y
 pip3 install huggingface_hub[hf_xet]
 ```
 
@@ -28,14 +28,16 @@ pip install git+https://github.com/m-bain/whisperX.git
 
 ### Optimized for my basic laptop :
 
+Compute type is int8 for small capacity computer.
+
 ```shell
 whisperx \
   --model large-v3 \
   --diarize \
   --language fr \
   --min_speakers 2 \
-  --max_speakers 3 \
-  --compute_type float16 \
+  --max_speakers 2 \
+  --compute_type int8 \
   --batch_size 6 \
   --output_dir ./outputs \
   --hf_token hf_XYZ \
@@ -44,6 +46,8 @@ whisperx \
 ```
 
 ### Optimized for nvidia graphic cards :
+
+Using compute type float16 for more precision, require more ressources.
 
 ```shell
 whisperx \
