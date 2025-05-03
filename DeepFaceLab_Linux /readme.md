@@ -1,4 +1,20 @@
-Pour le Jetson : Modifier requirements-cuda.txt
+
+# Problème de lenteur avec le Trainer Preview:
+
+Il faut réduire le range par défaut pour l'historique.
+Dans Trainer.py dans ~/Workspace/DF/DeepFaceLab/mainscripts
+
+quand show_last_history_iters_count est égal à 0, il ramène tout l'historique et ralenti tout.
+Il faut le mettre à 5000 ou moins par défaut.
+
+ligne 251 :
+show_last_history_iters_count = 500
+ligne 349:
+ elif show_last_history_iters_count == 100000:
+                    show_last_history_iters_count = 500
+
+
+# Pour le Jetson : Modifier requirements-cuda.txt
 ```txt
 # DeepFaceLab requirements optimized for Jetson (aarch64)
 
