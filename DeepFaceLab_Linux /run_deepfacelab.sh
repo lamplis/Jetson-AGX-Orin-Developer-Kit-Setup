@@ -77,6 +77,31 @@ docker compose run --rm dfl
 # apt-get update
 # apt-get install -y --no-install-recommends python3-opencv
 
+# désinstalle la version “user” éventuellement installée avec apt pas de version arm64  en 22.04
+# sudo apt-get remove python-matplotlib*
+
+# réinstalle proprement de pip
+# pip3 install matplotlib -y
+
+# Pourquoi la fenêtre est figée et ne reçoit aucune touche ?
+# Sous Ubuntu 22.04, l’OpenCV 4.5.4 livré par le dépôt (python3‑opencv 4.5.4+dfsg‑9ubuntu4) utilise le backend HighGUI GTK3.
+# Ce backend :
+# n’envoie pas les événements clavier à cv::waitKey()/getWindowProperty() (bogue connu : https://github.com/opencv/opencv/issues/21460) ;
+# bloque parfois le rafraîchissement de la fenêtre quand imshow() est appelé depuis un thread secondaire (cas de DeepFaceLab).
+# 1) Supprimez la version apt
+# sudo apt-get purge -y python3-opencv libopencv*
+# sudo apt-get autoremove -y
+
+# 2) Installez les dépendances pour Qt + vidéo
+# sudo apt-get install -y libqt5gui5 libqt5widgets5 libqt5core5a \
+#                         libavcodec58 libavformat58 libswscale5 libavutil56
+
+# 3) Installez OpenCV 4.5.5 (ou plus récent) avec pip
+# python3 -m pip install --upgrade pip wheel
+# roue complète (HighGUI Qt) :
+# python3 -m pip install opencv-python==4.5.5.64
+
+
 
 echo
 echo "ℹ️  Next time you can jump straight in with:"
