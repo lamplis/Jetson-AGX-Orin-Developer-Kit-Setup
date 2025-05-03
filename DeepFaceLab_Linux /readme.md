@@ -1,17 +1,31 @@
+# Why is the Preview window frozen and not receiving any key inputs?
+On **Ubuntu 22.04**, the OpenCV **4.5.4** version provided by the repository (`python3-opencv 4.5.4+dfsg-9ubuntu4`) uses the **HighGUI GTK3** backend.  
+This backend:
+- **Does not send keyboard events** to `cv::waitKey()`/`getWindowProperty()` (known issue: [https://github.com/opencv/opencv/issues/21460](https://github.com/opencv/opencv/issues/21460));
+- **Sometimes blocks window refresh** when `imshow()` is called from a secondary thread (case of DeepFaceLab).
 
-# Problème de lenteur avec le Trainer Preview:
+## **1) Remove the apt version**
+```bash
+sudo apt-get purge -y python3-opencv libopencv*
+sudo apt-get autoremove -y
+```
 
-Il faut réduire le range par défaut pour l'historique.
-Dans Trainer.py dans ~/Workspace/DF/DeepFaceLab/mainscripts
+## **2) Install dependencies for Qt + video**
+```bash
+sudo apt-get install -y libqt5gui5 libqt5widgets5 libqt5core5a \
+                        libavcodec58 libavformat58 libswscale5 libavutil56
+```
 
-quand show_last_history_iters_count est égal à 0, il ramène tout l'historique et ralenti tout.
-Il faut le mettre à 5000 ou moins par défaut.
+## **3) Install OpenCV 4.5.5 (or later) using pip**
+```bash
+python3 -m pip install --upgrade pip wheel
+```
+Complete package (HighGUI Qt):
+```bash
+python3 -m pip install opencv-python==4.5.5.64
+```
 
-ligne 251 :
-show_last_history_iters_count = 500
-ligne 349:
- elif show_last_history_iters_count == 100000:
-                    show_last_history_iters_count = 500
+
 
 
 # Pour le Jetson : Modifier requirements-cuda.txt
