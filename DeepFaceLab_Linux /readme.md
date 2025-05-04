@@ -1,3 +1,8 @@
+# Check all Threads execution:
+```bash
+top -H -p $(pgrep -n -f DFL-GUI)
+```
+
 # Why is the Preview window frozen and not receiving any key inputs?
 On **Ubuntu 22.04**, the OpenCV **4.5.4** version provided by the repository (`python3-opencv 4.5.4+dfsg-9ubuntu4`) uses the **HighGUI GTK3** backend.  
 This backend:
