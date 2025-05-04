@@ -15,6 +15,7 @@ mkdir ~/Workspace
 mkdir ~/Workspace/sources
 cd ~/Workspace/sources
 git clone https://github.com/jetsonhacks/install-docker.git
+cd ~/Workspace/sources/install-docker/
 ```
 
 ## Core Installation
@@ -27,6 +28,7 @@ bash ./install_nvidia_docker.sh
 Configure the Jetson to run Docker and take advantage of NVIDIA runtime
 ```bash
 bash ./configure_nvidia_docker.sh
+docker -v
 ```
 
 ## Unhold and Upgrade Docker
