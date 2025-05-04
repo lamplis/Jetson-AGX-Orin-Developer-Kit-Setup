@@ -1,5 +1,4 @@
 # syntax=docker/dockerfile:1.7
-
 ###############################################################################
 # ---------- build-time arguments --------------------------------------------
 ###############################################################################
@@ -16,68 +15,144 @@ ARG HOST_UID
 ARG HOST_GID
 
 ###############################################################################
-# ---------- System packages installation ------------------------------------
+# ---------- System packages installation 1 ------------------------------------
 ###############################################################################
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
-        git wget curl ffmpeg build-essential cmake nano \
-        libhdf5-serial-dev hdf5-tools python3-h5py \
-        pkg-config libhdf5-dev \
-        libavcodec58 libavformat58 libswscale5 libavutil56 && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get update && apt-get install -y --no-install-recommends \
+        git wget curl ffmpeg build-essential cmake nano unzip \
+        hdf5-tools x11-apps gedit
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+	apt-get purge -y python3-opencv libopencv* && \
+	apt-get autoremove -y
+###############################################################################
+# ---------- Install TensorFlow optimisé TensorRT ----------------------------
+###############################################################################
+   
+COPY tensorflow-2.16.1+nv24.08-cp310-cp310-linux_aarch64.whl /tmp/
+
+RUN pip3 install --no-cache-dir /tmp/tensorflow-2.16.1+nv24.08-cp310-cp310-linux_aarch64.whl && \
+    rm /tmp/tensorflow-2.16.1+nv24.08-cp310-cp310-linux_aarch64.whl
+
+###############################################################################
+# ---------- System packages installation 2------------------------------------
+###############################################################################
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+        libqt5gui5 libqt5widgets5 libqt5core5a \
+        libavcodec58 libavformat58 libswscale5 libavutil56 \
+        # pkg-config libhdf5-serial-dev libhdf5-dev \
+        # python3-opencv libopenblas-dev \
+        #libavcodec58 libavformat58 libswscale5 libavutil56 \
+        #libnvinfer8 libnvinfer-dev libnvonnxparsers8 libnvonnxparsers-dev \
+        #python3-opencv
+        #python3-opencv python3-pyqt5 python3-h5py \
+        #qtbase5-dev libqt5widgets5 libqt5gui5 libqt5core5a \
+#       #libtesseract-dev libtesseract4 liblept5 \
+    && rm -rf /var/lib/apt/lists/*
 
 ###############################################################################
 # ---------- Python packages (pip base setup) --------------------------------
 ###############################################################################
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    pip3 install --upgrade pip setuptools wheel
+    python3 -m pip install --upgrade pip wheel && \
+    python3 -m pip install --upgrade pip setuptools wheel && \
+    python3 -m pip install --no-cache-dir \
+        opencv-python==4.5.5.64 
+#	PyQt5==5.15.0
 
 ###############################################################################
-# ---------- Clone DeepFaceLab repositories ----------------------------------
+# ---------- Clone DeepFaceLab repositories (cached + refresh) ---------------
 ###############################################################################
 WORKDIR /opt
 
-RUN git clone --depth 1 https://gitee.com/zhanghongwei_cmiot/DeepFaceLab_Linux.git && \
-    git clone --depth 1 https://github.com/iperov/DeepFaceLab.git DeepFaceLab
+RUN --mount=type=cache,target=/opt/gitcache,sharing=locked \
+    # Clone or update DeepFaceLab_Linux
+    if [ ! -d "/opt/gitcache/DeepFaceLab_Linux/.git" ]; then \
+        echo "[INFO] Cloning DeepFaceLab_Linux..."; \
+        git clone --depth 1 https://gitee.com/zhanghongwei_cmiot/DeepFaceLab_Linux.git /opt/gitcache/DeepFaceLab_Linux; \
+    else \
+        echo "[INFO] Refreshing DeepFaceLab_Linux..."; \
+        cd /opt/gitcache/DeepFaceLab_Linux && git pull --rebase --autostash || true; \
+    fi && \
+    cp -r /opt/gitcache/DeepFaceLab_Linux /opt/DeepFaceLab_Linux && \
+    \
+    # Clone or update DeepFaceLab
+    if [ ! -d "/opt/gitcache/DeepFaceLab/.git" ]; then \
+        echo "[INFO] Cloning DeepFaceLab..."; \
+        git clone --depth 1 https://github.com/iperov/DeepFaceLab.git /opt/gitcache/DeepFaceLab; \
+    else \
+        echo "[INFO] Refreshing DeepFaceLab..."; \
+        cd /opt/gitcache/DeepFaceLab && git pull --rebase --autostash || true; \
+    fi && \
+    cp -r /opt/gitcache/DeepFaceLab /opt/DeepFaceLab && \
+    \
+    find /opt/DeepFaceLab_Linux/ -type f -name "*.sh" -exec sed -i 's/python3\.7/python3/g' {} +
+
 
 ###############################################################################
 # ---------- Setup workspace -------------------------------------------------
 ###############################################################################
-RUN mkdir /workspace && \
-    cp -r /opt/DeepFaceLab_Linux/* /workspace/ && \
-    find /workspace/ -type f -name "*.sh" -exec sed -i 's/python3\.7/python3/g' {} + && \
-    chown -R 1000:1000 /workspace
+RUN mkdir /workspace
 
-WORKDIR /workspace
+# WORKDIR /workspace
 
 ###############################################################################
 # ---------- Copy requirements -----------------------------------------------
 ###############################################################################
-COPY requirements-cuda.txt ./DeepFaceLab/requirements-cuda.txt
+RUN mv /opt/DeepFaceLab/requirements-cuda.txt /opt/DeepFaceLab/requirements-cuda.txt.bkp
+COPY requirements-cuda.txt /opt/DeepFaceLab/requirements-cuda.txt
+
+###############################################################################
+# ---------- Copy pretrained assets ------------------------------------------
+# Place Xseg14m.zip and DF.wf.288res.384.92.72.22.zip next to the Dockerfile.
+###############################################################################
+COPY Xseg14m.zip \
+#    LIAE-UDT_WF_352_352_80_80_24_AB_1M_MrDrMasterChef.zip \
+#    DF-UDT_WF_384_384_84_84_28_1M_MrDrMasterChef.zip \
+    /tmp/
+
+RUN set -eux; \
+    # XSeg generic model
+    mkdir -p /opt/DeepFaceLab/model_generic_xseg && \
+    unzip -q /tmp/Xseg14m.zip -d /opt/DeepFaceLab/model_generic_xseg && \
+    # DF pretrained workflow
+    mkdir -p /opt/model && \
+#    unzip -q -o /tmp/LIAE-UDT_WF_352_352_80_80_24_AB_1M_MrDrMasterChef.zip -d /opt && \
+#    unzip -q -o /tmp/DF-UDT_WF_384_384_84_84_28_1M_MrDrMasterChef.zip -d /opt && \
+    # cleanup
+    rm /tmp/*.zip
 
 ###############################################################################
 # ---------- Install DeepFaceLab dependencies --------------------------------
 ###############################################################################
-# Install only non-TensorFlow packages
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    grep -vE '^(#|$)' ./DeepFaceLab/requirements-cuda.txt | grep -v 'tensorflow' > /tmp/requirements-no-tf.txt && \
+    grep -vE '^(#|$)' /opt/DeepFaceLab/requirements-cuda.txt | grep -v 'tensorflow' > /tmp/requirements-no-tf.txt && \
     pip3 install --no-cache-dir --prefer-binary -r /tmp/requirements-no-tf.txt
 
-# Allow TensorRT acceleration (optimisation inferencing ultra-fast)
-RUN apt-get update && apt-get install -y libnvinfer8 libnvinfer-dev libnvonnxparsers8 libnvonnxparsers-dev
-
-# Download and install TensorFlow separately
-RUN wget --progress=bar:force -q \
-    https://developer.download.nvidia.com/compute/redist/jp/v61/tensorflow/tensorflow-2.16.1+nv24.08-cp310-cp310-linux_aarch64.whl && \
-    pip3 install --no-cache-dir tensorflow-2.16.1+nv24.08-cp310-cp310-linux_aarch64.whl && \
-    rm tensorflow-2.16.1+nv24.08-cp310-cp310-linux_aarch64.whl
+###############################################################################
+# ---------- Fix missing shared libraries ------------------------------------
+###############################################################################
+# COPY fix_missing_libs.sh /usr/local/bin/fix_missing_libs.sh
+# RUN chmod +x /usr/local/bin/fix_missing_libs.sh && /usr/local/bin/fix_missing_libs.sh
 
 ###############################################################################
-# ---------- Create a non-root user -------------------------------------------
+# PATCH OF Fortune, no idea why it fixes a libcudnn 8 not found:
+# 4) Installe la version Ubuntu (4.5.4) – sans dépendance cuDNN
+###############################################################################
+# RUN rm -rf /usr/local/lib/python3.10/dist-packages/cv2*  \
+#       /usr/local/lib/python3.10/dist-packages/opencv* && \
+#	apt-get purge -y 'libopencv*-4.8*' 'libopencv*-4.9*' 'libopencv*-4.10*' || true  && \
+#	apt-get autoremove -y && \
+#	apt-get update && \
+#	apt-get install -y --no-install-recommends python3-opencv
+
+###############################################################################
+# ---------- Create a non-root user ------------------------------------------
 ###############################################################################
 RUN groupadd -g ${HOST_GID} dflgroup && \
-    useradd -m -u ${HOST_UID} -g dflgroup dfluser
+    useradd -m -u ${HOST_UID} -g dflgroup dfluser && \
+    chown -R ${HOST_UID}:${HOST_GID} /workspace
 
 USER dfluser
 WORKDIR /workspace

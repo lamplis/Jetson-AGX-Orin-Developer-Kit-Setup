@@ -1,8 +1,56 @@
 #!/usr/bin/env bash
 set -e
-cd /usr/lib/aarch64-linux-gnu
-ln -sf libavcodec.so.58 libavcodec-e61fde82.so.58.134.100
-ln -sf libavformat.so.58 libavformat-a93773b3.so.58.76.100
-ln -sf libavutil.so.56 libavutil-5f9c2f63.so.56.70.100
-ln -sf libswscale.so.5 libswscale-e6d9d937.so.5.9.100
-ln -sf libopenblas.so.0 libopenblas-r0-8966572e.3.3.so
+
+# Where the libraries are expected
+LIB_DIR="/usr/lib/aarch64-linux-gnu"
+
+echo "[fix_missing_libs.sh] Checking and fixing missing libraries if needed..."
+
+# Ensure the system knows about the library path
+# echo "$LIB_DIR" > /etc/ld.so.conf.d/aarch64-libs.conf
+# export LD_LIBRARY_PATH="$LIB_DIR:$LD_LIBRARY_PATH"
+# ldconfig
+
+# List of critical libs needed by DeepFaceLab and OpenCV
+declare -A libs=(
+    ["libavcodec"]="libavcodec.so.58"
+    ["libavformat"]="libavformat.so.58"
+    ["libavutil"]="libavutil.so.56"
+    ["libswscale"]="libswscale.so.5"
+    ["libopenblas"]="libopenblas.so.0"
+    ["libcudnn.so.9.3.0"]="libcudnn.so.8"
+    ["libopenblas"]="libcblas.so.3"
+
+    #["libQt5Core"]="libQt5Core.so.5"
+    #["libQt5Core"]="libQt5Core-9e162752.so.5.15.0"
+    #["libQt5Gui"]="libQt5Gui.so.5"
+    #["libQt5Gui"]="libQt5Gui-61c96aa3.so.5.15.0"
+    #["libQt5Test"]="libQt5Test-32fc1c2a.so.5.15.0"
+    #["libQt5Widgets"]="libQt5Widgets.so.5"
+    #["libQt5Widgets"]="libQt5Widgets-b1296c1e.so.5.15.0"
+    
+    #["libtesseract-dev"]="libtesseract.so.4"
+    #["liblept.so"]="liblept.so.5"
+    #ln -sf libtesseract.so libtesseract.so.4
+    #apt-get install --reinstall libtesseract4
+    #apt-get install --reinstall liblept5
+
+)
+
+for name in "${!libs[@]}"; do
+    real_lib="$LIB_DIR/${libs[$name]}"
+    if [ ! -e "$real_lib" ]; then
+        echo "  [WARN] Expected $real_lib not found, skipping..."
+        continue
+    fi
+
+    for orphan in $(find $LIB_DIR -maxdepth 1 -name "${name}-*.so*" || true); do
+        if [ ! -e "$orphan" ]; then
+            echo "  [INFO] Creating missing symlink: $orphan -> $real_lib"
+            ln -sf "$real_lib" "$orphan"
+        fi
+    done
+done
+
+echo "[fix_missing_libs.sh] Done."
+
