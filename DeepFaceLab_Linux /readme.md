@@ -1,3 +1,11 @@
+# Build and Run the container
+
+```bash
+cd ~/Workspace/DFL
+chmod +x run_deepfacelab.sh
+./run_deepfacelab.sh
+```
+
 # Check all Threads execution:
 ```bash
 top -H -p $(pgrep -n -f DFL-GUI)
