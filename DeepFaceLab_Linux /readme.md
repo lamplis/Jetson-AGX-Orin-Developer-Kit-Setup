@@ -3,6 +3,9 @@
 ```bash
 cd ~/Workspace/DFL
 chmod +x run_deepfacelab.sh
+sudo mkdir /workspace
+sudo chown -R $USER:$USER /workspace/
+
 ./run_deepfacelab.sh
 ```
 
