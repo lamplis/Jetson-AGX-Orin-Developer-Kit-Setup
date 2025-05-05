@@ -5,6 +5,7 @@ cd ~/Workspace/DFL
 chmod +x run_deepfacelab.sh
 sudo mkdir /workspace
 sudo chown -R $USER:$USER /workspace/
+xhost +local:root  # authorize X11 local access
 
 ./run_deepfacelab.sh
 ```
