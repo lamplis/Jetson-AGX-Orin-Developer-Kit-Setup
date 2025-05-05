@@ -4,17 +4,21 @@ services:
       context: ./docker
       dockerfile: Dockerfile.jetson
       args:
-        L4T_TAG: "r35.2.1"
+        L4T_TAG: "r36.2.0"
         HOST_UID: "${UID}"
         HOST_GID: "${GID}"
     platform: linux/arm64
     runtime: nvidia
     environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
       - TZ=Europe/Paris
     volumes:
       - /workspace:/workspace
+      - /tmp/.X11-unix:/tmp/.X11-unix
+#      - ./docker/opencv_autocast_patch.py:/workspace/DeepFaceLab/core/leras/opencv_autocast_patch.py
     shm_size: "8gb"
     stdin_open: true
     tty: true
