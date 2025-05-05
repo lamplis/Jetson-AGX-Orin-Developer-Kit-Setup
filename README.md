@@ -5,7 +5,7 @@ Great presentation: https://docs.ultralytics.com/fr/guides/nvidia-jetson/#what-i
 ## Upgrade your clean installation
 ```shell
 sudo apt-get update && sudo apt-get upgrade 
-sudo apt-get install -y --no-install-recommends git wget curl ffmpeg build-essential cmake nano unzip
+sudo apt-get install -y --no-install-recommends git wget curl ffmpeg build-essential cmake nano unzip jtop
 sudo reboot
 ```
 
