@@ -3,9 +3,11 @@ set -euxo pipefail
 
 # Variables
 OPENCV_VERSION="4.5.5"
-NUM_CORES=12
+NUM_CORES=2
+PKG_NAME="opencv-jetson"
+PKG_VERSION="${OPENCV_VERSION}"
 
-# Dépendances
+# Dépendances de compilation + Qt + checkinstall
 apt-get update && apt-get install -y --no-install-recommends \
     build-essential cmake git pkg-config \
     libjpeg-dev libpng-dev libtiff-dev \
@@ -13,19 +15,20 @@ apt-get update && apt-get install -y --no-install-recommends \
     libv4l-dev libxvidcore-dev libx264-dev \
     libgtk-3-dev libqt5gui5 libqt5widgets5 libqt5core5a qtbase5-dev \
     libatlas-base-dev gfortran python3-dev python3-numpy \
-    libopenblas-dev libhdf5-dev
+    libopenblas-dev libhdf5-dev \
+    checkinstall
 
-# Téléchargement des sources
+# Télécharger les sources
 cd /opt
 rm -rf opencv opencv_contrib
 git clone --depth 1 -b ${OPENCV_VERSION} https://github.com/opencv/opencv.git
 git clone --depth 1 -b ${OPENCV_VERSION} https://github.com/opencv/opencv_contrib.git
 
-# Création du dossier de build
+# Créer dossier de build
 mkdir -p /opt/opencv/build
 cd /opt/opencv/build
 
-# Configuration CMake
+# Configurer CMake
 cmake -D CMAKE_BUILD_TYPE=Release \
       -D CMAKE_INSTALL_PREFIX=/usr/local \
       -D OPENCV_EXTRA_MODULES_PATH=/opt/opencv_contrib/modules \
@@ -43,10 +46,19 @@ cmake -D CMAKE_BUILD_TYPE=Release \
       -D BUILD_DOCS=OFF \
       ..
 
-# Compilation (adaptée à Jetson)
+# Compiler
 make -j${NUM_CORES}
-make install
-ldconfig
 
-# Nettoyage (optionnel)
+# Créer un .deb avec checkinstall (installera aussi OpenCV dans /usr/local)
+checkinstall --pkgname=${PKG_NAME} \
+             --pkgversion=${PKG_VERSION} \
+             --backup=no \
+             --deldoc=yes \
+             --fstrans=no \
+             --default \
+             make install
+
+# Nettoyage (facultatif)
 rm -rf /opt/opencv /opt/opencv_contrib
+
+echo "✅ Paquet .deb créé : $(ls -1 /opt/opencv/build/*.deb || echo 'inconnu')"
