@@ -3,7 +3,7 @@ set -euxo pipefail
 
 # Variables
 OPENCV_VERSION="4.5.5"
-NUM_CORES=2
+NUM_CORES=12
 
 # Dépendances
 apt-get update && apt-get install -y --no-install-recommends \
