@@ -15,6 +15,27 @@ ARG HOST_UID
 ARG HOST_GID
 
 ###############################################################################
+# ---------- Copy pretrained assets ------------------------------------------
+# Place Xseg14m.zip and DF.wf.288res.384.92.72.22.zip next to the Dockerfile.
+###############################################################################
+WORKDIR /opt
+
+COPY Xseg14m.zip \
+#    LIAE-UDT_WF_352_352_80_80_24_AB_1M_MrDrMasterChef.zip \
+#    DF-UDT_WF_384_384_84_84_28_1M_MrDrMasterChef.zip \
+    /tmp/
+
+RUN set -eux; \
+    # XSeg generic model
+    unzip -q /tmp/Xseg14m.zip -d /opt/model_generic_xseg && \
+    # DF pretrained workflow
+#    mkdir -p /opt/model && \
+#    unzip -q -o /tmp/LIAE-UDT_WF_352_352_80_80_24_AB_1M_MrDrMasterChef.zip -d /opt && \
+#    unzip -q -o /tmp/DF-UDT_WF_384_384_84_84_28_1M_MrDrMasterChef.zip -d /opt && \
+    # cleanup
+    rm /tmp/*.zip
+    
+###############################################################################
 # ---------- System packages installation 1 ------------------------------------
 ###############################################################################
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -22,9 +43,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         git wget curl ffmpeg build-essential cmake nano unzip \
         hdf5-tools x11-apps gedit
 
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-	apt-get purge -y python3-opencv libopencv* && \
-	apt-get autoremove -y
 ###############################################################################
 # ---------- Install TensorFlow optimisé TensorRT ----------------------------
 ###############################################################################
@@ -51,6 +69,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 #       #libtesseract-dev libtesseract4 liblept5 \
     && rm -rf /var/lib/apt/lists/*
 
+# RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+#	apt-get purge -y python3-opencv libopencv* && \
+#	apt-get autoremove -y
 ###############################################################################
 # ---------- Python packages (pip base setup) --------------------------------
 ###############################################################################
@@ -88,7 +109,20 @@ RUN --mount=type=cache,target=/opt/gitcache,sharing=locked \
     cp -r /opt/gitcache/DeepFaceLab /opt/DeepFaceLab && \
     \
     find /opt/DeepFaceLab_Linux/ -type f -name "*.sh" -exec sed -i 's/python3\.7/python3/g' {} +
+    
+RUN	mkdir -p /opt/DeepFaceLab/model_generic_xseg && \
+	mv /opt/model_generic_xseg /opt/DeepFaceLab/model_generic_xseg
 
+###############################################################################
+# ---------- Override files ---------------
+###############################################################################
+# COPY env.sh /opt/DeepFaceLab_Linux/scripts/env.sh
+
+###############################################################################
+# ---------- Copy requirements -----------------------------------------------
+###############################################################################
+RUN if [ -f /opt/DeepFaceLab/requirements-cuda.txt ]; then mv /opt/DeepFaceLab/requirements-cuda.txt /opt/DeepFaceLab/requirements-cuda.txt.bkp; else echo "requirements‑cuda.txt missing – skipping rename"; fi
+COPY requirements-cuda.txt /opt/DeepFaceLab/requirements-cuda.txt
 
 ###############################################################################
 # ---------- Setup workspace -------------------------------------------------
@@ -97,31 +131,6 @@ RUN mkdir /workspace
 
 # WORKDIR /workspace
 
-###############################################################################
-# ---------- Copy requirements -----------------------------------------------
-###############################################################################
-RUN mv /opt/DeepFaceLab/requirements-cuda.txt /opt/DeepFaceLab/requirements-cuda.txt.bkp
-COPY requirements-cuda.txt /opt/DeepFaceLab/requirements-cuda.txt
-
-###############################################################################
-# ---------- Copy pretrained assets ------------------------------------------
-# Place Xseg14m.zip and DF.wf.288res.384.92.72.22.zip next to the Dockerfile.
-###############################################################################
-COPY Xseg14m.zip \
-#    LIAE-UDT_WF_352_352_80_80_24_AB_1M_MrDrMasterChef.zip \
-#    DF-UDT_WF_384_384_84_84_28_1M_MrDrMasterChef.zip \
-    /tmp/
-
-RUN set -eux; \
-    # XSeg generic model
-    mkdir -p /opt/DeepFaceLab/model_generic_xseg && \
-    unzip -q /tmp/Xseg14m.zip -d /opt/DeepFaceLab/model_generic_xseg && \
-    # DF pretrained workflow
-    mkdir -p /opt/model && \
-#    unzip -q -o /tmp/LIAE-UDT_WF_352_352_80_80_24_AB_1M_MrDrMasterChef.zip -d /opt && \
-#    unzip -q -o /tmp/DF-UDT_WF_384_384_84_84_28_1M_MrDrMasterChef.zip -d /opt && \
-    # cleanup
-    rm /tmp/*.zip
 
 ###############################################################################
 # ---------- Install DeepFaceLab dependencies --------------------------------
@@ -133,8 +142,8 @@ RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
 ###############################################################################
 # ---------- Fix missing shared libraries ------------------------------------
 ###############################################################################
-# COPY fix_missing_libs.sh /usr/local/bin/fix_missing_libs.sh
-# RUN chmod +x /usr/local/bin/fix_missing_libs.sh && /usr/local/bin/fix_missing_libs.sh
+COPY fix_missing_libs.sh /usr/local/bin/fix_missing_libs.sh
+RUN chmod +x /usr/local/bin/fix_missing_libs.sh && /usr/local/bin/fix_missing_libs.sh
 
 ###############################################################################
 # PATCH OF Fortune, no idea why it fixes a libcudnn 8 not found:
