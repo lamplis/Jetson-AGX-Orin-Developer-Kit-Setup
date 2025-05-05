@@ -7,7 +7,7 @@ export DFL_PYTHON="python3"
 # -- Correct absolute paths
 export DFL_WORKSPACE="/workspace"
 export DFL_SRC="/opt/DeepFaceLab"
-export DFL_ROOT="./"
+export DFL_ROOT="/opt/DeepFaceLab_Linux/scripts"
 
 # -- Create workspace folders if missing
 if [ ! -d "$DFL_WORKSPACE" ]; then
