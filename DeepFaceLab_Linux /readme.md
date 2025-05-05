@@ -26,6 +26,8 @@ cd /opt/DeepFaceLab_Linux/scripts
 Debug in root mode
 ```bash
 docker compose run --rm --user root dfl
+# modifier env.sh :
+# source "/DFL_ROOT/env.sh"
 ```
 
 # Check all Threads execution:
