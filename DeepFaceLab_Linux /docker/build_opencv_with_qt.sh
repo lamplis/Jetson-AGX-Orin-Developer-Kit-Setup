@@ -3,7 +3,7 @@ set -euxo pipefail
 
 # Variables
 OPENCV_VERSION="4.5.5"
-NUM_CORES=2
+NUM_CORES=12
 PKG_NAME="opencv-jetson"
 PKG_VERSION="${OPENCV_VERSION}"
 
