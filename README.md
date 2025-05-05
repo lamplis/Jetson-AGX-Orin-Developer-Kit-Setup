@@ -9,6 +9,23 @@ sudo apt-get install -y --no-install-recommends git wget curl ffmpeg build-essen
 sudo reboot
 ```
 
+## Installer `jtop`
+
+`jtop` fait partie de [**Jetson Stats**](https://github.com/rbonghi/jetson_stats), un outil Python développé pour surveiller l’usage CPU/GPU/RAM/températures sur Jetson.
+
+How to install it :
+
+```bash
+sudo apt-get install -y python3-pip python3-setuptools
+sudo -H pip3 install -U jetson-stats
+```
+
+Then :
+
+```bash
+sudo jtop
+```
+
 ## Install compatible Docker for JetPack 6.2    
 Thank you Jetson Hacks for this complete tutorial : https://github.com/jetsonhacks/install-docker
 
