@@ -22,6 +22,10 @@ Train Xseg
 cd /opt/DeepFaceLab_Linux/scripts
 ./5_XSeg_train.sh
 ```
+Debug in root mode
+```bash
+docker compose run --rm --user root dfl
+```
 
 # Check all Threads execution:
 ```bash
