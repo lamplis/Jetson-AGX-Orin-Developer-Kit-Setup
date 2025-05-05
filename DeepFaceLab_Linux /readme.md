@@ -1,3 +1,12 @@
+# Create a Jetson Compatible container
+```bash
+cd ~/Workspace/sources
+git clone --depth 1 https://github.com/dusty-nv/jetson-containers
+bash jetson-containers/install.sh
+
+jetson-containers build --base=dustynv/cudnn:8.9-r36.2.0 --name=my_container:tensors tensorflow2 tensorrt:8.6
+```
+
 # Build and Run the container
 
 ```bash
