@@ -9,7 +9,7 @@ numexpr
 h5py>=3.10.0
 
 # OpenCV for image operations (headless, lighter and ARM64 compatible)
-opencv-python-headless==4.5.*
+opencv-python==4.5.*
 
 # Video processing
 ffmpeg-python==0.1.17
