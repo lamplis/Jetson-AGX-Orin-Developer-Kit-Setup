@@ -14,9 +14,14 @@ Start with initializing your workspace
 ```bash
 mkdir /workspace/model
 cp -r /opt/DeepFaceLab/model_generic_xseg/* /workspace/model/
+cp -r /opt/model/* /workspace/model/
 ```
 
-
+Train Xseg
+```bash
+cd /opt/DeepFaceLab_Linux/scripts
+./5_XSeg_train.sh
+```
 
 # Check all Threads execution:
 ```bash
