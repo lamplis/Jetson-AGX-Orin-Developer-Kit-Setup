@@ -14,7 +14,7 @@ services:
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
       - TZ=Europe/Paris
     volumes:
-      - ./workspace:/workspace
+      - /workspace:/workspace
     shm_size: "8gb"
     stdin_open: true
     tty: true
