@@ -8,6 +8,15 @@ sudo chown -R $USER:$USER /workspace/
 
 ./run_deepfacelab.sh
 ```
+You will be in the container.
+Start with initializing your workspace
+
+```bash
+mkdir /workspace/model
+cp -r /opt/DeepFaceLab/model_generic_xseg/* /workspace/model/
+```
+
+
 
 # Check all Threads execution:
 ```bash
