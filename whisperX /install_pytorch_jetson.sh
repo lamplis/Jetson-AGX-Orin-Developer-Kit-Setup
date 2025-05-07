@@ -48,9 +48,9 @@ fi
 echo "⬇️ Downloading missing wheels (if any)..."
 
 # https://pypi.jetson-ai-lab.dev/jp6/cu126
-[ ! -f "$TORCH_WHL" ] && wget https://pypi.jetson-ai-lab.dev/jp6/cu126/+f/52c/2cbdd62b78f32/torch-2.7.0-cp310-cp310-linux_aarch64.whl -O "$TORCH_WHL"
-[ ! -f "$TORCHAUDIO_WHL" ] && wget https://pypi.jetson-ai-lab.dev/jp6/cu126/+f/168/bf9b78fde1430/torchaudio-2.7.0-cp310-cp310-linux_aarch64.whl -O "$TORCHAUDIO_WHL"
-[ ! -f "$TORCHVISION_WHL" ] && wget https://pypi.jetson-ai-lab.dev/jp6/cu126/+f/859/288f4efd0c21d/torchvision-0.22.0-cp310-cp310-linux_aarch64.whl -O "$TORCHVISION_WHL"
+[ ! -f "$TORCH_WHL" ] && wget https://pypi.jetson-ai-lab.dev/jp6/cu126/+f/6ef/f643c0a7acda9/torch-2.7.0-cp310-cp310-linux_aarch64.whl -O "$TORCH_WHL"
+[ ! -f "$TORCHAUDIO_WHL" ] && wget https://pypi.jetson-ai-lab.dev/jp6/cu126/+f/c59/026d500c57366/torchaudio-2.7.0-cp310-cp310-linux_aarch64.whl -O "$TORCHAUDIO_WHL"
+[ ! -f "$TORCHVISION_WHL" ] && wget https://pypi.jetson-ai-lab.dev/jp6/cu126/+f/daa/bff3a07259968/torchvision-0.22.0-cp310-cp310-linux_aarch64.whl -O "$TORCHVISION_WHL"
 
 
 
