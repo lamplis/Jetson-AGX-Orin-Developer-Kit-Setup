@@ -23,6 +23,7 @@ for VENV in "${VENV_LIST[@]}"; do
   echo "=============================="
   echo "🔧 Traitement de l'environnement : $VENV"
   echo "=============================="
+  deactivate || true
   source "$VENV/bin/activate"
   
   echo "⬆️  Mise à jour pip / setuptools / wheel..."
@@ -37,21 +38,11 @@ for VENV in "${VENV_LIST[@]}"; do
   echo "🚀 Installation de xformers (Jetson)..."
   python -m pip install "xformers==0.0.30+4cf69f0.d20250501" --no-cache
 
-  echo "💥 Compilation Flash-Attn (v2.5.6)..."
-  [ -d flash-attention ] && rm -rf flash-attention
-  git clone https://github.com/Dao-AILab/flash-attention.git -b v2.5.6
-  pushd flash-attention
-  python setup.py install
-  popd
-  rm -rf flash-attention
+  echo "📦 Installation Flash-Attn compilé..."
+  python -m pip install --no-deps --force-reinstall "$HOME/flashattn-build"
 
-  echo "🌿 Compilation Sage-Attn..."
-  [ -d sage-attention ] && rm -rf sage-attention
-  git clone https://github.com/OpenAccess-AI-Collective/sage-attention.git
-  pushd sage-attention
-  python setup.py install
-  popd
-  rm -rf sage-attention
+  echo "📦 Installation Sage-Attn compilé..."
+  python -m pip install --no-deps --force-reinstall "$HOME/sageattn-build"
 
   echo "✅ Vérification de l'installation dans $VENV"
   python - <<'EOF'
