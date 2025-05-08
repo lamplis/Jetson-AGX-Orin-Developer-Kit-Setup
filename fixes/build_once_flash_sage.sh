@@ -38,7 +38,7 @@ bash install_pytorch_jetson.sh
 
 # Variables CUDA pour Orin
 export TORCH_CUDA_ARCH_LIST="8.7"
-export MAX_JOBS=12
+export MAX_JOBS=10
 export FORCE_CUDA=1
 export CUDA_HOME=/usr/local/cuda-12.6
 export PATH=$CUDA_HOME/bin:$PATH
