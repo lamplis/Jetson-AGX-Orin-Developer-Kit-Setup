@@ -38,7 +38,7 @@ bash install_pytorch_jetson.sh
 
 # Variables CUDA pour Orin
 export TORCH_CUDA_ARCH_LIST="8.7"
-export MAX_JOBS=10
+export MAX_JOBS=4
 export FORCE_CUDA=1
 export CUDA_HOME=/usr/local/cuda-12.6
 export PATH=$CUDA_HOME/bin:$PATH
@@ -47,15 +47,35 @@ echo "💥 Compilation Flash-Attn dans $FLASH_OUT"
 [ -d flash-attention ] && rm -rf flash-attention
 git clone https://github.com/Dao-AILab/flash-attention.git -b v2.5.6
 pushd flash-attention
-pip install . --no-build-isolation --target "$FLASH_OUT"
+python -m pip install . \
+    --no-build-isolation \
+    --no-cache-dir \
+    --force-reinstall \
+    --verbose \
+    --target "$FLASH_OUT"
 popd
 rm -rf flash-attention
 
 echo "🌿 Compilation Sage-Attn dans $SAGE_OUT"
-[ -d sage-attention ] && rm -rf sage-attention
-git clone https://github.com/OpenAccess-AI-Collective/sage-attention.git
-pushd sage-attention
-pip install . --no-build-isolation --target "$SAGE_OUT"
+# Clone du dépôt
+[ -d sage-attention ] && rm -rf SageAttention
+git clone https://github.com/thu-ml/SageAttention.git
+pushd SageAttention
+
+echo "🩹 Patch du setup.py pour corriger la variable 'num' manquante..."
+sed -i '/arch=compute_{num},code=sm_{num}/c\    NVCC_FLAGS += ["-gencode", "arch=compute_87,code=sm_87"]' setup.py
+
+# Installation dans un dossier cible (optionnel)
+SAGE_OUT="${SAGE_OUT:-/tmp/sage_install}"
+mkdir -p "$SAGE_OUT"
+
+python -m pip install . \
+    --no-build-isolation \
+    --no-cache-dir \
+    --force-reinstall \
+    --target "$SAGE_OUT" \
+    --verbose
+
 popd
 rm -rf sage-attention
 
