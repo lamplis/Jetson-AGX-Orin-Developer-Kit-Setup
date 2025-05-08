@@ -13,7 +13,7 @@ sudo apt-get install -y build-essential ninja-build cmake libopenblas-dev python
 
 # Variables CUDA pour Orin
 export TORCH_CUDA_ARCH_LIST="8.7"
-export MAX_JOBS=10
+export MAX_JOBS=4
 export FORCE_CUDA=1
 export CUDA_HOME=/usr/local/cuda-12.6 
 export PATH=$CUDA_HOME/bin:$PATH
