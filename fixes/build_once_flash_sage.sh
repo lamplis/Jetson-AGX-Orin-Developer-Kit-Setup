@@ -44,19 +44,18 @@ export CUDA_HOME=/usr/local/cuda-12.6
 export PATH=$CUDA_HOME/bin:$PATH
 
 echo "💥 Compilation Flash-Attn dans $FLASH_OUT"
+FLASH_WHEEL_DIR="$HOME/flashattn-wheel"
+mkdir -p "$FLASH_WHEEL_DIR"
 [ -d flash-attention ] && rm -rf flash-attention
 git clone https://github.com/Dao-AILab/flash-attention.git -b v2.5.6
 pushd flash-attention
-python -m pip install . \
-    --no-build-isolation \
-    --no-cache-dir \
-    --force-reinstall \
-    --verbose \
-    --target "$FLASH_OUT"
+python -m pip wheel . -w "$FLASH_WHEEL_DIR" --no-build-isolation --no-deps
 popd
 rm -rf flash-attention
 
 echo "🌿 Compilation Sage-Attn dans $SAGE_OUT"
+SAGE_WHEEL_DIR="$HOME/sageattn-wheel"
+mkdir -p "$SAGE_WHEEL_DIR"
 # Clone du dépôt
 [ -d sage-attention ] && rm -rf SageAttention
 git clone https://github.com/thu-ml/SageAttention.git
@@ -65,18 +64,9 @@ pushd SageAttention
 echo "🩹 Patch du setup.py pour corriger la variable 'num' manquante..."
 sed -i '/arch=compute_{num},code=sm_{num}/c\    NVCC_FLAGS += ["-gencode", "arch=compute_87,code=sm_87"]' setup.py
 
-# Installation dans un dossier cible (optionnel)
-SAGE_OUT="${SAGE_OUT:-/tmp/sage_install}"
-mkdir -p "$SAGE_OUT"
-
-python -m pip install . \
-    --no-build-isolation \
-    --no-cache-dir \
-    --force-reinstall \
-    --target "$SAGE_OUT" \
-    --verbose
-
+python -m pip wheel . -w "$SAGE_WHEEL_DIR" --no-build-isolation --no-deps
 popd
+
 rm -rf sage-attention
 
 conda deactivate
