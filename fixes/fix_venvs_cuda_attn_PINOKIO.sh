@@ -36,15 +36,17 @@ for VENV in "${VENV_LIST[@]}"; do
   bash install_pytorch_jetson.sh
 
   echo "🚀 Installation de xformers (Jetson)..."
-  python -m pip install "xformers==0.0.30+4cf69f0.d20250501" --no-cache
+  #python -m pip install "xformers==0.0.24" --no-cache
+  python -m pip install --no-index --no-deps --force-reinstall \
+  "$HOME/wheels/xformers-wheel"/xformers-*.whl
 
   echo "📦 Installation Flash-Attn compilé..."
   python -m pip install --no-index --no-deps --force-reinstall \
-  "$HOME/flashattn-wheel"/flash_attn-*.whl
+  "$HOME/wheels/flashattn-wheel"/flash_attn-*.whl
 
   echo "📦 Installation Sage-Attn compilé..."
   python -m pip install --no-index --no-deps --force-reinstall \
-  "$HOME/sageattn-wheel"/sageattention-*.whl
+  "$HOME/wheels/sageattn-wheel"/sageattention-*.whl
 
   echo "✅ Vérification de l'installation dans $VENV"
   python - <<'EOF'
@@ -65,10 +67,10 @@ except Exception as e:
     print("flash_attn KO:", e)
 
 try:
-    import sage_attn
-    print("sage_attn OK")
+    import sageattention
+    print("sageattention OK")
 except Exception as e:
-    print("sage_attn KO:", e)
+    print("sageattention KO:", e)
 EOF
 
   deactivate
