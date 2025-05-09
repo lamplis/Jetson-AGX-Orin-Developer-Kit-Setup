@@ -39,10 +39,12 @@ for VENV in "${VENV_LIST[@]}"; do
   python -m pip install "xformers==0.0.30+4cf69f0.d20250501" --no-cache
 
   echo "📦 Installation Flash-Attn compilé..."
-  python -m pip install --no-deps --force-reinstall "$HOME/flashattn-build"
+  python -m pip install --no-index --no-deps --force-reinstall \
+  "$HOME/flashattn-wheel"/flash_attn-*.whl
 
   echo "📦 Installation Sage-Attn compilé..."
-  python -m pip install --no-deps --force-reinstall "$HOME/sageattn-build"
+  python -m pip install --no-index --no-deps --force-reinstall \
+  "$HOME/sageattn-wheel"/sageattention-*.whl
 
   echo "✅ Vérification de l'installation dans $VENV"
   python - <<'EOF'
