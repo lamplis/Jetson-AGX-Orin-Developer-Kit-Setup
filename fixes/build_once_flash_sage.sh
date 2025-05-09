@@ -17,6 +17,7 @@ source "$CONDA_SH"
 BUILD_ENV_NAME="flashattn-build"
 FLASH_OUT=~/flashattn-build
 SAGE_OUT=~/sageattn-build
+XFORMERS_OUT=~/xformers-build
 
 echo "🛠️ Création de l'environnement Conda de build : $BUILD_ENV_NAME"
 conda remove -y -n "$BUILD_ENV_NAME" --all || true
@@ -43,22 +44,34 @@ export FORCE_CUDA=1
 export CUDA_HOME=/usr/local/cuda-12.6
 export PATH=$CUDA_HOME/bin:$PATH
 
-echo "💥 Compilation Flash-Attn dans $FLASH_OUT"
-FLASH_WHEEL_DIR="$HOME/flashattn-wheel"
+
+XFORMERS_WHEEL_DIR="$HOME/wheels/xformers-wheel"
+echo "💥 Compilation xformers dans $XFORMERS_WHEEL_DIR"
+mkdir -p "$XFORMERS_WHEEL_DIR"
+[ -d xformers ] && rm -rf xformers
+git clone --recursive https://github.com/facebookresearch/xformers.git -b v0.0.24
+pushd xformers
+python -m pip wheel . -w "$XFORMERS_WHEEL_DIR" --no-build-isolation --no-deps
+popd
+#rm -rf xformers
+
+FLASH_WHEEL_DIR="$HOME/wheels/flashattn-wheel"
+echo "💥 Compilation Flash-Attn dans $FLASH_WHEEL_DIR"
 mkdir -p "$FLASH_WHEEL_DIR"
 [ -d flash-attention ] && rm -rf flash-attention
 git clone https://github.com/Dao-AILab/flash-attention.git -b v2.5.6
+#git clone https://github.com/Dao-AILab/flash-attention.git -b v2.7.4
 pushd flash-attention
 python -m pip wheel . -w "$FLASH_WHEEL_DIR" --no-build-isolation --no-deps
 popd
-rm -rf flash-attention
+#rm -rf flash-attention
 
-echo "🌿 Compilation Sage-Attn dans $SAGE_OUT"
-SAGE_WHEEL_DIR="$HOME/sageattn-wheel"
+SAGE_WHEEL_DIR="$HOME/wheels/sageattn-wheel"
+echo "🌿 Compilation Sage-Attn dans $SAGE_WHEEL_DIR"
 mkdir -p "$SAGE_WHEEL_DIR"
 # Clone du dépôt
-[ -d sage-attention ] && rm -rf SageAttention
-git clone https://github.com/thu-ml/SageAttention.git
+[ -d SageAttention ] && rm -rf SageAttention
+git clone https://github.com/thu-ml/SageAttention.git -b v2.0.1
 pushd SageAttention
 
 echo "🩹 Patch du setup.py pour corriger la variable 'num' manquante..."
@@ -67,7 +80,7 @@ sed -i '/arch=compute_{num},code=sm_{num}/c\    NVCC_FLAGS += ["-gencode", "arch
 python -m pip wheel . -w "$SAGE_WHEEL_DIR" --no-build-isolation --no-deps
 popd
 
-rm -rf sage-attention
+#rm -rf sage-attention
 
 conda deactivate
 echo "✅ Compilation unique terminée avec succès."
