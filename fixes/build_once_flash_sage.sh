@@ -79,8 +79,28 @@ sed -i '/arch=compute_{num},code=sm_{num}/c\    NVCC_FLAGS += ["-gencode", "arch
 
 python -m pip wheel . -w "$SAGE_WHEEL_DIR" --no-build-isolation --no-deps
 popd
-
 #rm -rf sage-attention
+
+echo "🧩 Compilation de decord pour Jetson (sm_87)..."
+DECORD_WHEEL_DIR="$HOME/wheels/decord-wheel"
+rm -rf decord
+mkdir -p "$DECORD_WHEEL_DIR"
+git clone --recursive https://github.com/dmlc/decord.git -b v0.6.0
+mkdir decord/build
+pushd decord/build
+cmake .. -DUSE_CUDA=0 -DCMAKE_BUILD_TYPE=Release
+make -j$(nproc)
+popd
+pushd decord/python
+python -m pip wheel . -w "$DECORD_WHEEL_DIR" --no-build-isolation --no-deps
+popd
+
+
+echo "🧩 Download onnxruntime pour Jetson (sm_87)..."
+ONNXRUNTIME_WHEEL_DIR="$HOME/wheels/onnxruntime-wheel"
+mkdir -p "$ONNXRUNTIME_WHEEL_DIR"
+wget -P "$ONNXRUNTIME_WHEEL_DIR" \
+  "https://pypi.jetson-ai-lab.dev/jp6/cu126/+f/869/e41abdc35e093/onnxruntime_gpu-1.22.0-cp310-cp310-linux_aarch64.whl"
 
 conda deactivate
 echo "✅ Compilation unique terminée avec succès."
