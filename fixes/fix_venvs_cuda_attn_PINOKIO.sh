@@ -3,8 +3,9 @@ set -e
 
 # Liste des virtualenvs à corriger (modifiez ici si nécessaire)
 VENV_LIST=(
-  "/home/lamplis/pinokio/api/hunyuanvideo.git/app/env"
-  "/home/lamplis/pinokio/api/Frame-Pack.git/app/env"
+#  "/home/lamplis/pinokio/api/hunyuanvideo.git/app/env"
+#  "/home/lamplis/pinokio/api/Frame-Pack.git/app/env"
+  "/home/lamplis/pinokio/api/wan.git/app/env"
 )
 
 echo "🧱 Vérification des dépendances système..."
@@ -47,6 +48,14 @@ for VENV in "${VENV_LIST[@]}"; do
   echo "📦 Installation Sage-Attn compilé..."
   python -m pip install --no-index --no-deps --force-reinstall \
   "$HOME/wheels/sageattn-wheel"/sageattention-*.whl
+  
+  echo "📦 Installation decord compilé..."
+  python -m pip install --no-index --no-deps --force-reinstall \
+  "$HOME/wheels/decord-wheel"/decord-*.whl
+
+  echo "📦 Installation onnxruntime..."
+  python -m pip install --no-index --no-deps --force-reinstall \
+  "$HOME/wheels/onnxruntime-wheel"/onnxruntime_gpu-*.whl
 
   echo "✅ Vérification de l'installation dans $VENV"
   python - <<'EOF'
@@ -72,6 +81,43 @@ try:
 except Exception as e:
     print("sageattention KO:", e)
 EOF
+
+  echo "✅ Vérification de Decord dans $VENV"
+python - <<'EOF'
+import os, urllib.request, numpy as np, decord, contextlib
+from decord import VideoReader, cpu
+
+print("✅ Decord version:", decord.__version__)
+
+url = "https://file-examples.com/storage/feaf304f8a681f45d9c35d4/2017/04/file_example_MP4_640_3MG.mp4"
+video_path = "sample_cpu_test.mp4"
+downloaded = False
+
+# 1) Fetch clip if missing
+if not os.path.exists(video_path):
+    print("⬇️  Downloading test clip …")
+    urllib.request.urlretrieve(url, video_path)
+    downloaded = True
+    print("✅  Download complete.")
+
+# 2) Open with CPU context
+vr = VideoReader(video_path, ctx=cpu(0))
+print(f"🎞️  Loaded | frames: {len(vr)} | shape: {vr[0].shape}")
+
+# 3) Assertions
+frame0 = vr[0].asnumpy()
+assert frame0.ndim == 3 and isinstance(frame0, np.ndarray)
+print("✅  Frame‑0 dtype:", frame0.dtype, "| min/max:", frame0.min(), frame0.max())
+
+print("\n🎉  Decord CPU test finished successfully.")
+
+# 4) Clean‑up
+with contextlib.suppress(Exception):
+    os.remove(video_path)
+    print("🧹  Sample file removed.")
+EOF
+
+
 
   deactivate
 done
