@@ -31,7 +31,8 @@ VERSION="17.0.6"
 PACKAGE_NAME="llvm-aarch64"
 SRC_DIR="$HOME/Workspace/sources/llvm"
 BUILD_DIR="$HOME/Workspace/builds/llvm-build"
-INSTALL_DIR="$HOME/.triton/llvm-aarch64"
+INSTALL_DIR="$HOME/Workspace/install/$PACKAGE_NAME"
+SYSTEM_INSTALL_DIR="/usr/lib/$PACKAGE_NAME"
 DEB_OUTPUT_DIR="$HOME/debs"
 
 #──────── Clean when --no-cache
@@ -70,13 +71,18 @@ cmake -G Ninja \
   -S "$SRC_DIR/llvm" \
   -B "$BUILD_DIR" \
   -DCMAKE_BUILD_TYPE=Release \
-  -DLLVM_ENABLE_PROJECTS="mlir;clang;lld" \
-  -DLLVM_TARGETS_TO_BUILD="AArch64;ARM;NVPTX" \
-  -DLLVM_ENABLE_RTTI=ON \
-  -DLLVM_ENABLE_ASSERTIONS=ON \
-  -DLLVM_ENABLE_TERMINFO=OFF \
-  -DLLVM_LINK_LLVM_DYLIB=ON \
   -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR" \
+  -DLLVM_BUILD_LLVM_DYLIB=ON \
+  -DLLVM_ENABLE_ASSERTIONS=ON \
+  -DLLVM_ENABLE_RTTI=ON \
+  -DLLVM_ENABLE_TERMINFO=OFF \
+  -DLLVM_EXTERNAL_PROJECTS="mlir" \
+  -DLLVM_LINK_LLVM_DYLIB=ON \
+  -DLLVM_ENABLE_PROJECTS="clang;mlir;lld" \
+  -DLLVM_TARGETS_TO_BUILD="AArch64;ARM;NVPTX" \
+  -DMLIR_ENABLE_BINDINGS_PYTHON=OFF \
+  -DMLIR_ENABLE_CUDA_CONVERSIONS=ON \
+  -DMLIR_INCLUDE_TESTS=OFF \
   -DCPACK_GENERATOR="DEB" \
   -DCPACK_PACKAGE_NAME="$PACKAGE_NAME" \
   -DCPACK_PACKAGE_VERSION="$VERSION" \
@@ -89,20 +95,59 @@ cmake -G Ninja \
 
 #──────── Build & install (stripped)
 cmake --build "$BUILD_DIR" -j"$NPROC"
-cmake --install "$BUILD_DIR" --strip
+echo "📦 Installation locale dans : $INSTALL_DIR"
+
+# ───> Avant l’étape d’install, on s’assure que le build dir est à nous  
+echo "🔧 Ajustement des permissions sur le build directory…"  
+# supprime le manifest root-owned s’il existe  
+rm -f "$BUILD_DIR/install_manifest.txt"  
+sudo chown -R "$USER":"$USER" "$BUILD_DIR"
+
+cmake --install "$BUILD_DIR" --strip --prefix "$INSTALL_DIR"
+
+echo "📁 Copying LLVM to $SYSTEM_INSTALL_DIR  – requires sudo"
+sudo rm -rf "$SYSTEM_INSTALL_DIR"
+sudo mkdir -p "$SYSTEM_INSTALL_DIR"
+sudo cp -a "$INSTALL_DIR"/. "$SYSTEM_INSTALL_DIR"
 
 #──────── Dump any CMake error log (for debug)
 echo "🧾 Dumping CMake error log:"
-cat "$BUILD_DIR/CMakeFiles/CMakeError.log" 2>/dev/null || echo "(no error log found)"
+cat "$BUILD_DIR/CMakeFiles/CMakeError.log" 2>/dev/null || echo "('no error log found')"
 
 #──────── Auto-detect runtime dependencies
 echo "🔍 Scanning runtime dependencies..."
 BINARIES=$(find "$INSTALL_DIR/bin" -type f -executable)
-LIBS=$(for b in $BINARIES; do ldd "$b" 2>/dev/null; done | awk '{print $1}' | grep '\.so' | sort -u)
-PKGS=()
+# ignore grep’s non-zero exit when there are no matches
+# run the ldd→awk→grep pipeline, but never exit if grep finds nothing
+{
+  # gather all .so names (with full path) but don’t fail if grep finds nothing
+  RAW_LIBS=$(for b in $BINARIES; do ldd "$b" 2>/dev/null; done \
+             | awk '{print $1}' \
+             | grep '\.so' || true)
+  echo "  -> raw deps:"
+  echo "$RAW_LIBS" | sed 's/^/     /'
+
+  # now strip paths, drop vdso & ld-linux, uniq & sort
+  LIBS=$(printf "%s\n" "$RAW_LIBS" \
+         | sed 's|.*/||' \
+         | grep -vE '^(linux-vdso\.so|ld-linux.*)' \
+         | sort -u)
+}
+echo "  -> filtered unique deps:"
+echo "$LIBS" | sed 's/^/     /'
+
+declare -a PKGS=()
 for l in $LIBS; do
-  f=$(ldconfig -p | grep "$l" | awk '{print $NF}' | head -n1)
-  [[ $f ]] && p=$(dpkg -S "$f" 2>/dev/null | cut -d: -f1 | head -n1) && [[ $p ]] && PKGS+=("$p")
+  # mask “no match” so that set -e doesn’t kill the script
+  f=$(
+    { ldconfig -p | grep "$l" | awk '{print $NF}' | head -n1; } || true
+  )
+  if [[ $f ]]; then
+    # ignore dpkg -S failures when the file isn’t in any package
+    p=$(dpkg -S "$f" 2>/dev/null || true)
+    p=${p%%:*}   # strip off the “: /path/to/lib” part
+    [[ $p ]] && PKGS+=("$p")
+  fi
 done
 UNIQUE=$(printf '%s\n' "${PKGS[@]}" | sort -u | paste -sd, -)
 if [[ $UNIQUE ]]; then
@@ -128,6 +173,9 @@ echo "📁 Moving .deb to $DEB_OUTPUT_DIR"
 find "$BUILD_DIR" -name "${PACKAGE_NAME}*.deb" -exec mv -v {} "$DEB_OUTPUT_DIR/" \;
 
 echo "✅ Finished — .deb is in $DEB_OUTPUT_DIR"
+
+# safely adds /usr/lib/llvm-aarch64/bin to your $PATH
+grep -qxF 'export PATH="/usr/lib/llvm-aarch64/bin:$PATH"' ~/.bashrc || echo 'export PATH="/usr/lib/llvm-aarch64/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
 
 #────────────────────── Check key binaries
 LLVM_DIR="$INSTALL_DIR"
