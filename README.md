@@ -25,6 +25,34 @@ Then :
 ```bash
 sudo jtop
 ```
+## Force Jetson Optimized Python Packages
+
+All requested pip install will download from nvidia repo, saving you a ton of time regarding compatibility issues.
+
+```bash
+export PIP_INDEX_URL="https://pypi.jetson-ai-lab.dev/jp6/cu130/+simple"
+export EXTRA_INDEX_URL="https://pypi.org/simple"
+
+echo "⚙️ Setting up pip configuration with Jetson AI Lab index..."
+mkdir -p "$HOME/.config/pip"
+cat > "$HOME/.config/pip/pip.conf" <<EOF
+[global]
+index-url = $PIP_INDEX_URL
+EOF
+```
+
+If a package is not provided by Nvidia, you can still rollback to original repo with the parameter **--extra-index-url**
+
+```bash
+export EXTRA_INDEX_URL="https://pypi.org/simple"
+
+python3 -m pip install \
+  ${CLEAN_INSTALL:+--no-cache-dir} \
+  --force-reinstall \
+  --only-binary=:all: \
+  --extra-index-url "$EXTRA_INDEX_URL" \
+  MODULE_NAME1 MODULE_NAME2
+```
 
 ## Install compatible Docker for JetPack 6.2    
 Thank you Jetson Hacks for this complete tutorial : https://github.com/jetsonhacks/install-docker
